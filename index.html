@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101415" />
+  <title>Phrase juste — entraînement au français</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#101415',
+            paper: '#f5f1e8',
+            saffron: '#efb94d',
+            sage: '#b9c9a7',
+            coral: '#e9896a',
+            mist: '#dfe7e1'
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            display: ['Fraunces', 'Georgia', 'serif'],
+            mono: ['"Space Mono"', 'ui-monospace', 'monospace']
+          },
+          boxShadow: {
+            soft: '0 24px 70px rgba(16, 20, 21, .16)',
+            lift: '0 12px 30px rgba(16, 20, 21, .13)'
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <!--
+    THESIS: Phrase juste transforme chaque erreur en geste de correction, plutôt qu'en fiche passive.
+    OWN-WORLD: encre bleu-noir, papier ivoire, jaune safran, formes éditoriales nettes et repères manuscrits.
+    STORY: l'apprenant voit une erreur, formule sa phrase, reçoit un retour explicite, puis construit son cahier.
+    FIRST VIEWPORT: rail de navigation à gauche, exercice large au centre, compteur de maîtrise à droite.
+    FORM: atelier d'édition en trois colonnes, choisi pour garder l'action et le contexte visibles ensemble.
+  -->
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101415;
+      --paper: #f5f1e8;
+      --paper-deep: #ebe5d8;
+      --saffron: #efb94d;
+      --sage: #b9c9a7;
+      --coral: #e9896a;
+      --line: rgba(16, 20, 21, .14);
+      --muted: #66716f;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 82% -8%, rgba(239, 185, 77, .2), transparent 27rem),
+        linear-gradient(135deg, #f5f1e8 0%, #eee9dd 100%);
+      color: var(--ink);
+      font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(239, 185, 77, .75);
+      outline-offset: 3px;
+    }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+      padding: 28px 18px; background: var(--ink); color: var(--paper); overflow: hidden;
+    }
+    .sidebar::after {
+      content: ""; position: absolute; width: 180px; height: 180px; right: -84px; bottom: 32px;
+      border: 1px solid rgba(239,185,77,.35); border-radius: 50%;
+      box-shadow: 0 0 0 22px rgba(239,185,77,.05), 0 0 0 44px rgba(239,185,77,.04);
+      pointer-events: none;
+    }
+    .brand { display: flex; gap: 12px; align-items: center; padding: 0 10px 34px; }
+    .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px 12px 12px 4px; background: var(--saffron); color: var(--ink); font-family: "Fraunces", serif; font-size: 21px; font-weight: 700; transform: rotate(-4deg); }
+    .brand-name { font-weight: 700; letter-spacing: -.02em; }
+    .brand-sub { display: block; color: #aeb9b4; font-size: 11px; font-family: "Space Mono", monospace; letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+    .nav { display: grid; gap: 8px; }
+    .nav-button { display: flex; gap: 11px; align-items: center; width: 100%; padding: 13px 12px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: #b6c0bd; text-align: left; transition: .2s ease; }
+    .nav-button:hover { background: rgba(255,255,255,.06); color: var(--paper); }
+    .nav-button.active { background: var(--paper); color: var(--ink); font-weight: 700; }
+    .nav-icon { width: 21px; text-align: center; font-size: 17px; }
+    .sidebar-note { margin-top: auto; position: relative; z-index: 1; padding: 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; color: #b6c0bd; font-size: 12px; line-height: 1.5; }
+    .sidebar-note strong { display: block; color: var(--saffron); margin-bottom: 5px; font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+    .main { min-width: 0; padding: 34px clamp(22px, 4vw, 64px) 54px; }
+    .topbar { display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 32px; }
+    .eyebrow { color: #5f6f68; font-family: "Space Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 9px; font-family: "Fraunces", serif; font-size: clamp(2rem, 3.3vw, 3.7rem); line-height: .98; letter-spacing: -.05em; }
+    .topbar-copy { max-width: 700px; color: #5b6663; line-height: 1.6; }
+    .topbar-actions { display: flex; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: rgba(255,255,255,.32); font-weight: 700; transition: transform .18s ease, background .18s ease, box-shadow .18s ease; }
+    .button:hover { transform: translateY(-2px); background: #fffdf7; box-shadow: var(--shadow, 0 8px 20px rgba(16,20,21,.08)); }
+    .button-primary { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+    .button-primary:hover { background: #273130; color: #fff; }
+    .button-accent { border-color: #d39b2d; background: var(--saffron); }
+    .button-small { min-height: 34px; padding: 7px 10px; font-size: 12px; }
+    .view { display: none; animation: enter .45s cubic-bezier(.2,.8,.2,1) both; }
+    .view.active { display: block; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .stats-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat { padding: 16px 17px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.36); }
+    .stat-label { color: var(--muted); font-size: 12px; }
+    .stat-value { margin-top: 5px; font-family: "Fraunces", serif; font-size: 28px; letter-spacing: -.04em; }
+    .xp-panel { margin-bottom: 20px; padding: 15px 17px 12px; border: 1px solid rgba(185,201,167,.7); border-radius: 14px; background: rgba(185,201,167,.22); }
+    .xp-topline { display: flex; justify-content: space-between; gap: 12px; color: #425347; font-size: 12px; }
+    .xp-topline strong { color: #243d2c; }
+    .xp-track { height: 12px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.65); }
+    .xp-fill { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #d79338, #efb94d, #e9896a); transition: width .5s ease; }
+    .xp-days { display: flex; justify-content: space-between; margin-top: 7px; color: #65736a; font-family: "Space Mono", monospace; font-size: 10px; }
+    .training-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+    .sheet, .side-panel { border: 1px solid var(--line); background: rgba(255,255,255,.55); box-shadow: 0 20px 60px rgba(16,20,21,.08); }
+    .sheet { border-radius: 18px; overflow: hidden; }
+    .sheet-top { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 22px 24px; background: var(--ink); color: var(--paper); }
+    .sheet-title { margin: 0; font-family: "Fraunces", serif; font-size: 24px; letter-spacing: -.03em; }
+    .sheet-number { color: var(--saffron); font-family: "Space Mono", monospace; font-size: 12px; }
+    .sheet-body { padding: clamp(20px, 3vw, 34px); }
+    .label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .category-pill { display: inline-flex; padding: 7px 10px; border-radius: 999px; background: var(--sage); color: #28352e; font-size: 12px; font-weight: 700; }
+    .error-quote { margin: 10px 0 23px; padding: 18px 20px; border-left: 3px solid var(--coral); background: #fffdf8; color: #25302f; font-family: "Fraunces", serif; font-size: clamp(1.25rem, 2.3vw, 1.75rem); line-height: 1.24; }
+    .hint { margin: -8px 0 22px; padding: 14px 16px; border: 1px dashed #b8a47b; border-radius: 10px; background: rgba(239,185,77,.12); color: #5d4a22; line-height: 1.55; }
+    .hidden { display: none !important; }
+    .mode-bar { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin: 0 0 25px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+    .mode-help { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .mode-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+    .mode-button { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid #c7d0c9; border-radius: 9px; background: #fffefa; color: #52605a; font-size: 11px; font-weight: 700; }
+    .mode-button span { display: grid; width: 19px; height: 19px; place-items: center; border-radius: 50%; background: #dfe7e1; color: #334239; font-size: 10px; }
+    .mode-button:hover, .mode-button.active { border-color: #334c3b; background: #334c3b; color: #fff; }
+    .mode-button.active span { background: var(--saffron); color: var(--ink); }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 19px; }
+    .exercise-instruction { margin: 0 0 12px; color: #55625c; font-size: 13px; }
+    .word-bank, .built-phrase { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; padding: 12px; border-radius: 11px; }
+    .built-phrase { margin-bottom: 13px; border: 1px dashed #9fb0a4; background: rgba(223,231,225,.48); }
+    .word-bank { border: 1px solid var(--line); background: #fffefa; }
+    .word-chip { padding: 9px 11px; border: 1px solid #b6c5ba; border-radius: 8px; background: #fff; color: #26332d; font-weight: 600; transition: .18s ease; }
+    .word-chip:hover { transform: translateY(-2px); border-color: #56755e; background: #ebf3e8; }
+    .word-chip.selected { opacity: .32; pointer-events: none; }
+    .built-chip { padding: 7px 10px; border-radius: 7px; background: var(--ink); color: var(--paper); font-size: 13px; }
+    .built-empty { color: #7a8580; font-size: 12px; align-self: center; }
+    .exercise-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+    .soft-button { padding: 7px 10px; border: 1px solid #c6d0c8; border-radius: 8px; background: transparent; color: #52605a; font-size: 12px; font-weight: 700; }
+    .soft-button:hover { background: #eff4ed; }
+    .cloze-line { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; padding: 17px; border: 1px solid var(--line); border-radius: 11px; background: #fffefa; font-family: "Fraunces", serif; font-size: 20px; line-height: 1.7; }
+    .cloze-input { width: 112px !important; min-height: 38px; padding: 5px 9px !important; border: 0 !important; border-bottom: 2px solid #c28c30 !important; border-radius: 3px !important; background: #fff3c9 !important; font-family: "DM Sans", sans-serif; font-size: 16px; }
+    .cloze-input:focus { box-shadow: none !important; }
+    .advanced-area textarea { min-height: 118px; }
+    .advanced-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+    .speech-listening { border-color: #bd6850; background: #f6d4c9; color: #6b3024; }
+    .letter-hint { color: #896729; font-size: 12px; }
+    .star-ladder { display: grid; gap: 7px; margin-top: 19px; }
+    .star-row { display: flex; gap: 10px; align-items: center; padding: 9px; border-radius: 9px; color: #84908a; }
+    .star-row.active { background: rgba(239,185,77,.18); color: #5e4a1b; }
+    .star-row span { min-width: 33px; color: #a2aaa4; letter-spacing: -2px; }
+    .star-row.active span { color: #d29525; }
+    .star-row strong, .star-row small { display: block; }
+    .star-row strong { font-size: 12px; }
+    .star-row small { margin-top: 2px; font-size: 10px; }
+    .verb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .verb-card { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.58); box-shadow: 0 16px 42px rgba(16,20,21,.07); }
+    .verb-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; padding: 18px 19px; background: var(--ink); color: var(--paper); }
+    .verb-title { margin: 0; font-family: "Fraunces", serif; font-size: 24px; letter-spacing: -.04em; }
+    .verb-translation { margin-top: 3px; color: #b7c4bf; font-size: 12px; }
+    .tense-badge { flex: none; padding: 6px 8px; border-radius: 999px; background: var(--saffron); color: var(--ink); font-family: "Space Mono", monospace; font-size: 10px; font-weight: 700; }
+    .verb-card-body { padding: 17px 19px 19px; }
+    .conjugation-grid { display: grid; gap: 8px; margin-bottom: 16px; }
+    .conjugation-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .conjugation-entry { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .conjugation-pronoun { min-width: 86px; color: var(--ink); font-size: 12px; font-weight: 700; }
+    .verbe-input { min-width: 0; min-height: 36px; padding: 7px 9px !important; border-radius: 7px !important; font-size: 13px; }
+    .verbe-input.answer-correct { border-color: #10B981 !important; background: #D1FAE5 !important; box-shadow: 0 0 0 3px rgba(16,185,129,.14); }
+    .verbe-input.answer-wrong { border-color: #EF4444 !important; background: #FEE2E2 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+    .conjugation-correction { min-height: 36px; display: flex; align-items: center; padding: 7px 9px; border-radius: 7px; background: #eef2ee; color: #315d3c; font-size: 13px; font-weight: 700; }
+    .conjugation-correction.hidden { display: none; }
+    @media (max-width: 520px) { .conjugation-row { grid-template-columns: 1fr; gap: 5px; } .conjugation-correction { margin-left: 94px; } }
+    .verb-card-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .verb-check-result { min-height: 20px; margin-top: 10px; color: #315d3c; font-size: 12px; font-weight: 700; }
+    .tense-badge { border: 0; cursor: pointer; }
+    .example-fr { margin-bottom: 4px; font-family: "Fraunces", serif; font-size: 17px; line-height: 1.3; }
+    .example-en { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .verb-audio { margin-top: 15px; }
+    .quiz-english-hint { margin: -6px 0 13px; color: #607168; font-size: 12px; font-style: italic; }
+    .field { margin-top: 17px; }
+    textarea, input[type="text"] { width: 100%; border: 1px solid #bdc7c1; border-radius: 10px; background: #fffefa; color: var(--ink); padding: 13px 14px; transition: border-color .2s, box-shadow .2s; }
+    textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
+    textarea:focus, input[type="text"]:focus { border-color: #4d6b5b; box-shadow: 0 0 0 4px rgba(185,201,167,.35); outline: 0; }
+    .accent-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .accent-button { min-width: 32px; padding: 5px 8px; border: 1px solid #c9b47a; border-radius: 7px; background: #fff4cf; color: #574519; font-family: "Space Mono", monospace; font-size: 12px; }
+    .accent-button:hover { background: var(--saffron); }
+    .form-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 23px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .form-hint { color: var(--muted); font-size: 12px; }
+    .feedback { margin-top: 18px; padding: 15px 16px; border-radius: 10px; line-height: 1.55; }
+    .feedback.explanation { padding: 18px; }
+    .feedback.explanation .feedback-title { display: block; margin-bottom: 7px; font-family: "Fraunces", serif; font-size: 20px; }
+    .next-button { width: 100%; margin-top: 12px; }
+    .feedback.success { background: #dcebd4; color: #234528; border: 1px solid #a9c99a; }
+    .feedback.error { background: #f9ddd3; color: #713b30; border: 1px solid #e7ab99; }
+    .diff { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; font-family: "Space Mono", monospace; font-size: 12px; line-height: 1.6; }
+    .diff span { padding: 2px 5px; border-radius: 4px; }
+    .diff .same { color: #47564d; }
+    .diff .wrong { background: #f4a995; color: #5e2b23; text-decoration: line-through; }
+    .diff .missing { background: #f7c85f; color: #573d07; }
+    .side-panel { border-radius: 16px; padding: 20px; position: sticky; top: 24px; }
+    .side-panel h3 { margin-bottom: 6px; font-family: "Fraunces", serif; font-size: 22px; letter-spacing: -.03em; }
+    .side-panel p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .progress-track { height: 10px; margin: 18px 0 9px; overflow: hidden; border-radius: 999px; background: #d6ded7; }
+    .progress-fill { height: 100%; width: 0; border-radius: inherit; background: var(--coral); transition: width .45s ease; }
+    .progress-copy { display: flex; justify-content: space-between; color: var(--muted); font-family: "Space Mono", monospace; font-size: 11px; }
+    .mini-list { display: grid; gap: 8px; margin-top: 20px; }
+    .mini-item { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 12px; }
+    .mini-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-dot { color: #5c9160; font-weight: 700; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.55); }
+    table { width: 100%; min-width: 920px; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); background: rgba(16,20,21,.04); font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+    td { font-size: 13px; line-height: 1.45; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .table-id { color: var(--muted); font-family: "Space Mono", monospace; font-size: 11px; }
+    .table-correction { color: #315d3c; font-weight: 700; }
+    .empty { padding: 50px 20px; color: var(--muted); text-align: center; }
+    .modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(16,20,21,.58); z-index: 10; }
+    .modal { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 25px; border-radius: 16px; background: var(--paper); box-shadow: 0 26px 80px rgba(0,0,0,.28); }
+    .modal-head { display: flex; justify-content: space-between; gap: 20px; align-items: start; }
+    .modal h2 { margin-bottom: 7px; font-family: "Fraunces", serif; font-size: 28px; letter-spacing: -.04em; }
+    .close-button { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 9px; background: transparent; font-size: 20px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; max-width: 320px; padding: 13px 16px; border: 1px solid #435e4a; border-radius: 10px; background: #263b30; color: #fffdf7; box-shadow: var(--shadow); transform: translateY(14px); opacity: 0; pointer-events: none; transition: .25s ease; z-index: 20; font-size: 13px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; padding: 16px 18px; }
+      .brand { padding-bottom: 16px; }
+      .nav { grid-template-columns: repeat(2, 1fr); }
+      .sidebar-note { display: none; }
+      .training-grid { grid-template-columns: 1fr; }
+      .side-panel { position: static; }
+      .mode-bar { display: block; }
+      .mode-buttons { justify-content: flex-start; margin-top: 12px; }
+      .verb-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .main { padding: 26px 15px 38px; }
+      .topbar { display: block; }
+      .topbar-actions { margin-top: 17px; justify-content: flex-start; }
+      .stats-strip { gap: 8px; }
+      .stat { padding: 12px; }
+      .stat-value { font-size: 22px; }
+      .sheet-top { padding: 18px; }
+      .sheet-body { padding: 20px 17px; }
+      .form-footer { align-items: stretch; flex-direction: column; }
+      .form-footer .button { width: 100%; }
+      .nav { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">é</div>
+        <div>
+          <div class="brand-name">Phrase juste</div>
+          <span class="brand-sub">atelier personnel</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Navigation principale">
+        <button class="nav-button active" data-view="training"><span class="nav-icon">✍</span><span>Entraînement</span></button>
+        <button class="nav-button" data-view="notebook"><span class="nav-icon">▤</span><span>Mon Cahier</span></button>
+        <button class="nav-button" data-view="typing"><span class="nav-icon">⌁</span><span>Fautes de frappe</span></button>
+        <button class="nav-button" data-view="verbs"><span class="nav-icon">📘</span><span>Verbes &amp; Conjugaison</span></button>
+      </nav>
+      <div class="sidebar-note">
+        <strong>Rituel conseillé</strong>
+        Une phrase. Une tentative. Une correction. Reviens demain pour consolider.
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow" id="viewEyebrow">Session du jour · correction active</div>
+          <h1 id="viewTitle">Réparer ses phrases, une à une.</h1>
+          <p class="topbar-copy" id="viewDescription">Écris ta version naturelle sans copier-coller. L'important n'est pas d'aller vite, mais de remarquer ce qui change.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="button button-accent" id="addErrorTop">＋ Nouvelle erreur</button>
+          <button class="button" id="importJsonButton">📥 Importer de nouvelles phrases (JSON)</button>
+          <input id="importJsonInput" type="file" accept=".json,application/json" hidden />
+          <button class="button" id="exportDataButton">📤 Exporter mes données (JSON)</button>
+          <button class="button" id="resetProgress">Réinitialiser</button>
+        </div>
+      </header>
+
+      <section class="view active" id="trainingView">
+        <div class="stats-strip">
+          <div class="stat"><div class="stat-label">Niveau du jour</div><div class="stat-value" id="levelStat">Niveau 1</div></div>
+          <div class="stat"><div class="stat-label">XP d'entraînement</div><div class="stat-value" id="xpStat">0 / 30</div></div>
+          <div class="stat"><div class="stat-label">Phrases maîtrisées</div><div class="stat-value" id="masteredStat">0 / 17</div></div>
+        </div>
+        <div class="xp-panel">
+          <div class="xp-topline"><span><strong id="xpStageLabel">Étoile 1 · Débutant écrit</strong> <span id="xpStageCopy">Le puzzle t'aide à trouver le bon ordre.</span></span><span id="xpPercent">0%</span></div>
+          <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+          <div class="xp-days"><span>Jour 1</span><span>Jour 7</span><span>Jour 15</span><span>Jour 30</span></div>
+        </div>
+
+        <div class="training-grid">
+          <article class="sheet">
+            <div class="sheet-top">
+              <div>
+                <div class="eyebrow" style="color:#aeb9b4;margin-bottom:6px;">Exercice de reformulation</div>
+                <h2 class="sheet-title">Trouve la phrase naturelle</h2>
+              </div>
+              <div class="sheet-number" id="taskNumber">01 / 17</div>
+            </div>
+            <div class="sheet-body">
+              <div class="mode-bar">
+                <div>
+                  <div class="label" style="margin-bottom:4px;">Choisis ton aide</div>
+                  <div class="mode-help" id="modeHelp">Commence avec les mots : clique simplement dans le bon ordre.</div>
+                </div>
+                <div class="mode-buttons" role="group" aria-label="Modes d'entraînement">
+                  <button class="mode-button active" data-mode="puzzle" type="button"><span>1</span>Puzzle</button>
+                  <button class="mode-button" data-mode="cloze" type="button"><span>2</span>Mots manquants</button>
+                  <button class="mode-button" data-mode="advanced" type="button"><span>3</span>Dictée / écriture</button>
+                </div>
+              </div>
+              <div class="label">Catégorie</div>
+              <div class="category-pill" id="taskCategory"></div>
+
+              <div class="field">
+                <div class="label">Ce que j'ai dit · mon erreur</div>
+                <blockquote class="error-quote" id="taskError"></blockquote>
+              </div>
+
+              <div class="card-actions">
+                <button class="button button-small" id="hintButton">💡 Voir l'indice · la règle</button>
+                <button class="button button-small" id="listenButton">🔊 Écouter la bonne phrase</button>
+              </div>
+              <div class="hint hidden" id="hintBox"></div>
+
+              <div id="exerciseArea"></div>
+
+              <div id="feedback" class="hidden"></div>
+              <div class="form-footer">
+                <div class="form-hint" id="formHint">Tu peux te tromper : l'objectif est de comprendre, pas de tout savoir du premier coup.</div>
+                <button class="button button-primary" id="checkButton">Vérifier mon ordre&nbsp; →</button>
+              </div>
+              <button class="button button-accent hidden" id="nextButton" type="button">Passer à la question suivante&nbsp; →</button>
+            </div>
+          </article>
+
+          <aside class="side-panel">
+            <div class="eyebrow">Carte de progression</div>
+            <h3>Ton cahier se remplit.</h3>
+            <p>Chaque phrase monte de niveau après deux réussites. Les exemples personnels restent disponibles dans <strong>Mon Cahier</strong>.</p>
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-copy"><span id="progressLabel">0 maîtrisée</span><span id="progressTotal">27 au total</span></div>
+            <div class="star-ladder">
+              <div class="star-row active" id="starOne"><span>★</span><div><strong>Étoile 1</strong><small>Puzzle · jours 1–7</small></div></div>
+              <div class="star-row" id="starTwo"><span>★★</span><div><strong>Étoile 2</strong><small>Mots manquants · jours 8–15</small></div></div>
+              <div class="star-row" id="starThree"><span>★★★</span><div><strong>Étoile 3</strong><small>Écriture / micro · jours 16–30</small></div></div>
+            </div>
+            <div class="mini-list" id="miniList"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="notebookView">
+        <div class="stats-strip">
+          <div class="stat"><div class="stat-label">Erreurs dans le cahier</div><div class="stat-value" id="notebookCount">17</div></div>
+          <div class="stat"><div class="stat-label">Corrections validées</div><div class="stat-value" id="notebookMastered">0</div></div>
+          <div class="stat"><div class="stat-label">Exemples personnels</div><div class="stat-value" id="notebookExamples">0</div></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <div class="eyebrow">Mémoire longue</div>
+            <h2 class="font-display text-3xl tracking-tight mb-1">Mon Cahier</h2>
+            <p class="text-sm text-[#66716f]">Toutes tes phrases, tes validations et tes exemples au même endroit.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="button button-small" id="exportCsv">↓ Exporter CSV</button>
+            <button class="button button-small" id="exportJson">↓ Exporter JSON</button>
+            <button class="button button-small" id="importJsonButtonNotebook">📥 Importer JSON</button>
+            <button class="button button-small" id="exportDataButtonNotebook">📤 Sauvegarder mes données</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Catégorie</th><th>Erreur de départ</th><th>Correction attendue</th><th>Mon exemple</th><th>État</th></tr></thead>
+            <tbody id="notebookBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="typingView">
+        <div class="stats-strip">
+          <div class="stat"><div class="stat-label">Fautes enregistrées</div><div class="stat-value" id="typingCount">0</div></div>
+          <div class="stat"><div class="stat-label">Mots différents</div><div class="stat-value" id="typingWords">0</div></div>
+          <div class="stat"><div class="stat-label">Dernière session</div><div class="stat-value" id="typingLast">—</div></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <div class="eyebrow">Suivi précis de l'écrit</div>
+            <h2 class="font-display text-3xl tracking-tight mb-1">Mes Fautes de Frappe</h2>
+            <p class="text-sm text-[#66716f]">Les accents, lettres inversées et mots tapés différemment restent séparés de tes erreurs de grammaire.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Phrase</th><th>Mot attendu</th><th>Ce que j'ai tapé</th><th>Type</th></tr></thead>
+            <tbody id="typingBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="verbsView">
+        <div class="stats-strip">
+          <div class="stat"><div class="stat-label">Verbes disponibles</div><div class="stat-value" id="verbsCount">0</div></div>
+          <div class="stat"><div class="stat-label">Temps révisés</div><div class="stat-value" id="tensesCount">0</div></div>
+          <div class="stat"><div class="stat-label">Stockage local</div><div class="stat-value">✓ Actif</div></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <div class="eyebrow">Révision guidée</div>
+            <h2 class="font-display text-3xl tracking-tight mb-1">Mes Verbes &amp; Conjugaison</h2>
+            <p class="text-sm text-[#66716f]">Écoute, lis les formes et relie chaque conjugaison à une phrase utile.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="button button-accent" id="importVerbsButton">📥 Importer mes verbes (JSON)</button>
+            <input id="importVerbsInput" type="file" accept=".json,application/json" hidden />
+          </div>
+        </div>
+        <div class="verb-grid" id="verbsGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">Ajouter au cahier</div>
+          <h2 id="modalTitle">Une nouvelle erreur</h2>
+          <p class="text-sm text-[#66716f]">Ajoute une phrase que tu veux retravailler plus tard.</p>
+        </div>
+        <button class="close-button" id="closeModal" aria-label="Fermer">×</button>
+      </div>
+      <div class="field"><label class="label" for="newCategory">Catégorie</label><input id="newCategory" type="text" placeholder="Ex. Prépositions" /></div>
+      <div class="field"><label class="label" for="newError">Ce que j'ai dit · mon erreur</label><textarea id="newError" placeholder="La phrase à corriger…"></textarea></div>
+      <div class="field"><label class="label" for="newCorrection">Correction attendue</label><textarea id="newCorrection" placeholder="La phrase naturelle…"></textarea></div>
+      <div class="field"><label class="label" for="newRule">Règle / indice</label><textarea id="newRule" placeholder="Pourquoi cette formulation est-elle meilleure ?"></textarea></div>
+      <div class="modal-actions"><button class="button" id="cancelModal">Annuler</button><button class="button button-primary" id="saveNewError">Ajouter au cahier</button></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const initialErrors = [
+      { id: 1, categorie: "Grammaire / Genre", erreur: "Bien journée / Aujourd'hui, je passe un bon jeur", correction: "J'ai passé une bonne journée", regle: "On dit 'une journée' (féminin), donc 'une bonne journée'." },
+      { id: 2, categorie: "Conjugaison / Vocabulaire", erreur: "Je jouer chess", correction: "J'ai joué aux échecs", regle: "Action passée = J'ai joué. Chess = les échecs (jouer aux échecs)." },
+      { id: 3, categorie: "Prononciation / Genre", erreur: "Dans le les barité de université", correction: "À la bibliothèque de l'université", regle: "Bibliothèque est féminin (à la). Devant une voyelle : de l'université." },
+      { id: 4, categorie: "Genre (M/F) / Vocabulaire", erreur: "Je donne mon fiche de statistique 4", correction: "J'ai rendu ma fiche de statistiques 4", regle: "Fiche est féminin (ma fiche). Pour un devoir : rendre (j'ai rendu)." },
+      { id: 5, categorie: "Expression orale", erreur: "Et je sais pas (à la fin d'une phrase)", correction: "Et c'est tout", regle: "Pour terminer une explication simplement : 'et c'est tout !'" },
+      { id: 6, categorie: "Négation au passé", erreur: "J'ai joué pas contre mon ami / Je ne joué pas", correction: "Je n'ai pas joué contre mon ami", regle: "Au passé composé : ne/n' + ai + pas + joué ('pas' est avant 'joué')." },
+      { id: 7, categorie: "Connecteur logique", erreur: "Pour cette j'ai utilisé non", correction: "C'est pour ça que j'ai dit non", regle: "Pour dire 'That's why' : c'est pour ça que..." },
+      { id: 8, categorie: "Prononciation / Voyelles", erreur: "Probabilité est un modèle", correction: "Les probabilités sont un module", regle: "Un cours à l'université = un module (son 'u' et non 'è')." },
+      { id: 9, categorie: "Souhait futur / Genre", erreur: "Je aime dans la doctorat", correction: "J'aimerais faire un doctorat", regle: "Souhait = J'aimerais faire. Doctorat est masculin (un doctorat)." },
+      { id: 10, categorie: "Prononciation / Commande", erreur: "Oui munsior, je suis frère de un plat de chawarma", correction: "Oui monsieur, je voudrais un plat de chawarma", regle: "Monsieur se prononce 'me-sieu'. Pour commander : je voudrais..." },
+      { id: 11, categorie: "Prononciation / Liaison", erreur: "Et pour mon ami, tu as mis commande tacos", correction: "Et pour mon ami, il va prendre un tacos", regle: "Pour commander pour un ami : il va prendre (ou il voudrait)." },
+      { id: 12, categorie: "Expression / Orthographe", erreur: "Je vais pas parler au compléter une phrase", correction: "Je n'arrive pas à parler ou à construire une phrase", regle: "Incapacité = Je n'arrive pas à... Or = ou (construire une phrase)." },
+      { id: 13, categorie: "Articles (Matières)", erreur: "J'aime bien la statistique, mais je préfère mathématiques financières", correction: "J'aime bien les statistiques, mais je préfère les mathématiques financières", regle: "Toujours mettre le, la, les devant les matières." },
+      { id: 14, categorie: "Prononciation (Je vs Il)", erreur: "Il voudrait commencer demain", correction: "Je voudrais commencer demain", regle: "Bien prononcer 'Je' au début (Je voudrais / Je vais écrire)." },
+      { id: 15, categorie: "Genre (-tion) / Élision", erreur: "Le ponctuation, je utilise le parallèle et je ne écris pas", correction: "Pour la ponctuation, j'utilise la dictée vocale et je n'écris pas", regle: "Mots en -tion = féminin (la). Apostrophe devant voyelle (j'utilise / je n'écris pas)." },
+      { id: 16, categorie: "Genre (-ion) / Temps", erreur: "Quel est ton vision, moi, après 30 jours ?", correction: "Quelle est ta vision pour moi dans 30 jours ?", regle: "Vision est féminin (Quelle est ta vision). Futur = dans 30 jours." },
+      { id: 17, categorie: "Orthographe / Prononciation", erreur: "Les erorres do hier / Dans l'affiche, je écris", correction: "Les erreurs d'hier / Dans la fiche, j'écris", regle: "Les erreurs d'hier. Dans la fiche (ou le fichier), j'écris." },
+      { id: 18, categorie: "Orthographe / Genre", erreur: "Les erorres do hier", correction: "Les erreurs d'hier", regle: "Erreur s'écrit avec deux 'r' (les erreurs). Devant une voyelle ou un h muet, 'de' devient 'd'' (d'hier)." },
+      { id: 19, categorie: "Vocabulaire / Dictée vocale", erreur: "Dans l'affiche, j'écris les erreurs", correction: "Dans la fiche (ou le tableau), j'écris les erreurs", regle: "Une affiche est un poster sur un mur. Pour un document ou un tableur, on dit 'la fiche', 'le fichier' ou 'le tableau'." },
+      { id: 20, categorie: "Élision (Apostrophe)", erreur: "je écris la correction de mes erreurs", correction: "j'écris la correction de mes erreurs", regle: "Devant une voyelle, 'je' perd son 'e' et prend une apostrophe : 'j'écris'." },
+      { id: 21, categorie: "Orthographe (Ça vs Sa) / Conjugaison", erreur: "Oui créer sa", correction: "Oui, crée ça !", regle: "'Crée' à l'impératif ne prend pas de 'r'. 'Ça' (avec cédille) signifie 'cela/that', tandis que 'sa' exprime la possession (sa fiche)." },
+      { id: 22, categorie: "Genre (M/F)", erreur: "dans le même première sheets", correction: "dans le même premier fichier", regle: "'Fichier' ou 'document' est masculin : on dit 'le premier fichier' (et non 'première')." },
+      { id: 23, categorie: "Vocabulaire / Prépositions", erreur: "je suis beginner pour l'écrivation", correction: "je suis débutant à l'écrit", regle: "'Beginner' se traduit par 'débutant'. Le mot 'écrivation' n'existe pas : on dit 'l'écriture' ou 'à l'écrit'." },
+      { id: 24, categorie: "Dictée vocale / Vocabulaire", erreur: "le difficulté chrome plus", correction: "la difficulté augmente de plus en plus", regle: "'Difficulté' est féminin (la difficulté). Pour exprimer une hausse, on utilise le verbe 'augmenter'." },
+      { id: 25, categorie: "Vocabulaire / Conjugaison", erreur: "C'est 2h. Il va sleep.", correction: "Il est 2 heures. Je vais dormir.", regle: "Pour donner l'heure, on dit 'Il est 2h'. Le verbe 'to sleep' se traduit par 'dormir' (je vais dormir)." },
+      { id: 26, categorie: "Conjugaison / Expressions", erreur: "J'ai vais super duolingo pour 12 mois", correction: "J'ai pris Super Duolingo pour un an", regle: "Pour un abonnement, on dit 'j'ai pris' ou 'je me suis abonné'. On dit couramment 'pour un an' ou 'pour 12 mois'." },
+      { id: 27, categorie: "Adjectifs / Prépositions", erreur: "Je suis préparé pour aujourd'hui commencer", correction: "Je suis prêt à commencer aujourd'hui", regle: "Pour exprimer le fait d'être disponible et prêt pour une action, on dit 'être prêt à + verbe'." }
+    ];
+
+    const STORAGE_KEY = "phrase-juste-state-v2";
+    const VERBS_STORAGE_KEY = "mesVerbesAppris";
+    const PRONOUNS = ["Je", "Tu", "Il / Elle / On", "Nous", "Vous", "Ils / Elles"];
+    const TENSE_ORDER = ["Présent", "Passé Composé", "Futur Proche"];
+    const defaultVerbs = [
+      { infinitif: "ÊTRE", anglais: "To be", temps: [
+        { nom: "Présent", formes: ["suis", "es", "est", "sommes", "êtes", "sont"], exemple: "Je suis étudiant à l'université.", exempleAnglais: "I am a university student." },
+        { nom: "Passé Composé", formes: ["ai été", "as été", "a été", "avons été", "avez été", "ont été"], exemple: "J'ai été malade hier.", exempleAnglais: "I was sick yesterday." },
+        { nom: "Futur Proche", formes: ["vais être", "vas être", "va être", "allons être", "allez être", "vont être"], exemple: "Je vais être en retard.", exempleAnglais: "I am going to be late." }
+      ] },
+      { infinitif: "AVOIR", anglais: "To have", temps: [
+        { nom: "Présent", formes: ["ai", "as", "a", "avons", "avez", "ont"], exemple: "J'ai un cours de statistiques.", exempleAnglais: "I have a statistics class." },
+        { nom: "Passé Composé", formes: ["ai eu", "as eu", "a eu", "avons eu", "avez eu", "ont eu"], exemple: "J'ai eu une bonne note.", exempleAnglais: "I had a good grade." },
+        { nom: "Futur Proche", formes: ["vais avoir", "vas avoir", "va avoir", "allons avoir", "allez avoir", "vont avoir"], exemple: "Je vais avoir un examen.", exempleAnglais: "I am going to have an exam." }
+      ] },
+      { infinitif: "ALLER", anglais: "To go", temps: [
+        { nom: "Présent", formes: ["vais", "vas", "va", "allons", "allez", "vont"], exemple: "Je vais à la bibliothèque.", exempleAnglais: "I go to the library." },
+        { nom: "Passé Composé", formes: ["suis allé", "es allé", "est allé", "sommes allés", "êtes allés", "sont allés"], exemple: "Je suis allé chez le coiffeur.", exempleAnglais: "I went to the barber." },
+        { nom: "Futur Proche", formes: ["vais aller", "vas aller", "va aller", "allons aller", "allez aller", "vont aller"], exemple: "Je vais aller en cours.", exempleAnglais: "I am going to go to class." }
+      ] },
+      { infinitif: "PRENDRE", anglais: "To take / To order", temps: [
+        { nom: "Présent", formes: ["prends", "prends", "prend", "prenons", "prenez", "prennent"], exemple: "Je prends le bus de l'université.", exempleAnglais: "I take the university bus." },
+        { nom: "Passé Composé", formes: ["ai pris", "as pris", "a pris", "avons pris", "avez pris", "ont pris"], exemple: "J'ai pris un plat de chawarma.", exempleAnglais: "I had a shawarma plate." },
+        { nom: "Futur Proche", formes: ["vais prendre", "vas prendre", "va prendre", "allons prendre", "allez prendre", "vont prendre"], exemple: "Je vais prendre un café.", exempleAnglais: "I am going to have a coffee." }
+      ] },
+      { infinitif: "FAIRE", anglais: "To do / To make", temps: [
+        { nom: "Présent", formes: ["fais", "fais", "fait", "faisons", "faites", "font"], exemple: "Je fais mes devoirs de gestion.", exempleAnglais: "I do my management homework." },
+        { nom: "Passé Composé", formes: ["ai fait", "as fait", "a fait", "avons fait", "avez fait", "ont fait"], exemple: "J'ai fait la fiche de TD.", exempleAnglais: "I did the TD sheet." },
+        { nom: "Futur Proche", formes: ["vais faire", "vas faire", "va faire", "allons faire", "allez faire", "vont faire"], exemple: "Je vais faire du sport.", exempleAnglais: "I am going to work out." }
+      ] },
+      { infinitif: "POUVOIR", anglais: "Can / To be able to", temps: [
+        { nom: "Présent", formes: ["peux", "peux", "peut", "pouvons", "pouvez", "peuvent"], exemple: "Je peux t'aider pour l'exercice.", exempleAnglais: "I can help you with the exercise." },
+        { nom: "Passé Composé", formes: ["ai pu", "as pu", "a pu", "avons pu", "avez pu", "ont pu"], exemple: "J'ai pu finir mon projet.", exempleAnglais: "I was able to finish my project." },
+        { nom: "Futur Proche", formes: ["vais pouvoir", "vas pouvoir", "va pouvoir", "allons pouvoir", "allez pouvoir", "vont pouvoir"], exemple: "Je vais pouvoir réviser ce soir.", exempleAnglais: "I will be able to revise tonight." }
+      ] }
+    ];
+    const keyWordsById = {
+      1: ["bonne", "journée"], 2: ["joué", "échecs"], 3: ["bibliothèque"], 4: ["rendu", "fiche"], 5: ["c'est", "tout"],
+      6: ["n'ai", "pas"], 7: ["pour", "ça"], 8: ["probabilités", "module"], 9: ["J'aimerais", "doctorat"],
+      10: ["monsieur", "voudrais"], 11: ["va", "prendre"], 12: ["n'arrive", "construire"], 13: ["statistiques", "les"],
+      14: ["Je", "voudrais"], 15: ["ponctuation", "j'utilise"], 16: ["Quelle", "ta"], 17: ["erreurs", "fiche"]
+    };
+    const defaultState = {
+      errors: initialErrors, answers: {}, examples: {}, mastered: [], attempts: 0, successes: 0, currentId: 1,
+      taskProgress: {}, selectedMode: {}, puzzleChoices: {}, typingErrors: [],
+      exerciseQueue: [], queueIndex: 0, startedAt: new Date().toISOString()
+    };
+    let state = loadState();
+    let learnedVerbs = loadVerbs();
+    let verbTenseSelections = {};
+    let activeMode = "puzzle";
+    let recognition = null;
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => [...document.querySelectorAll(selector)];
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+    const normalizeLoose = (value) => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[¿?!.,;:'"]/g, "").replace(/\s+/g, " ").trim().toLocaleLowerCase("fr-FR");
+    const normalizeStrict = (value) => String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("fr-FR");
+    function loadVerbs() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(VERBS_STORAGE_KEY) || "null");
+        if (!Array.isArray(saved) || !saved.length) return structuredClone(defaultVerbs);
+        const defaults = new Map(defaultVerbs.map((verb) => [verb.infinitif.toLocaleLowerCase("fr-FR"), verb]));
+        const merged = new Map(defaultVerbs.map((verb) => [verb.infinitif.toLocaleLowerCase("fr-FR"), verb]));
+        saved.map(normalizeVerb).filter((verb) => verb.infinitif && verb.temps.length).forEach((verb) => {
+          const key = verb.infinitif.toLocaleLowerCase("fr-FR");
+          merged.set(key, defaults.has(key) && verb.temps.length < 3 ? defaults.get(key) : verb);
+        });
+        return [...merged.values()];
+      } catch (error) {
+        console.warn("Impossible de charger les verbes locaux.", error);
+        return structuredClone(defaultVerbs);
+      }
+    }
+    function normalizeVerb(item) {
+      if (Array.isArray(item.temps)) {
+        return {
+          infinitif: String(item.infinitif || item.verbe || "").trim(),
+          anglais: String(item.anglais || item.translation || item.traduction || "").trim(),
+          temps: item.temps.map((tense) => ({
+            nom: String(tense.nom || tense.temps || "Présent").trim(),
+            formes: Array.isArray(tense.formes) ? tense.formes : PRONOUNS.map((pronoun) => tense.formes?.[pronoun] || ""),
+            exemple: String(tense.exemple || "").trim(),
+            exempleAnglais: String(tense.exempleAnglais || tense.traductionExemple || "").trim()
+          }))
+        };
+      }
+      const forms = item.formes || item.conjugaisons || item.forms;
+      return {
+        infinitif: String(item.infinitif || item.verbe || "").trim(),
+        anglais: String(item.anglais || item.translation || item.traduction || "").trim(),
+        temps: [{ nom: String(item.temps || item.tense || "Présent").trim(), formes: PRONOUNS.map((pronoun) => forms?.[pronoun] || ""), exemple: String(item.exemple || item.example || "").trim(), exempleAnglais: String(item.exempleAnglais || item.exampleEnglish || item.traductionExemple || "").trim() }]
+      };
+    }
+    function speakText(text) {
+      if (!("speechSynthesis" in window)) { showToast("La lecture audio n'est pas disponible dans ce navigateur."); return; }
+      const synth = window.speechSynthesis;
+      const speak = () => {
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "fr-FR";
+        utterance.rate = .84;
+        const frenchVoice = synth.getVoices().find((voice) => voice.lang?.toLowerCase().startsWith("fr-fr"))
+          || synth.getVoices().find((voice) => voice.lang?.toLowerCase().startsWith("fr"));
+        if (frenchVoice) utterance.voice = frenchVoice;
+        synth.speak(utterance);
+      };
+      if (synth.getVoices().length) speak();
+      else {
+        synth.onvoiceschanged = () => { synth.onvoiceschanged = null; speak(); };
+        speak();
+      }
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem("phrase-juste-state-v1"));
+        if (!saved) return structuredClone(defaultState);
+        const savedErrors = Array.isArray(saved.errors) ? saved.errors : [];
+        const existingIds = new Set(savedErrors.map((item) => item.id));
+        const mergedErrors = [...savedErrors, ...initialErrors.filter((item) => !existingIds.has(item.id))];
+        return { ...structuredClone(defaultState), ...saved, errors: mergedErrors.length ? mergedErrors : initialErrors, taskProgress: saved.taskProgress || {}, typingErrors: saved.typingErrors || [] };
+      } catch (error) {
+        console.warn("Impossible de charger la progression locale.", error);
+        return structuredClone(defaultState);
+      }
+    }
+    function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function buildExerciseQueue() {
+      const queue = [];
+      state.errors.forEach((task, index) => {
+        queue.push({ taskId: task.id, mode: "puzzle", kind: "new" });
+        if (index >= 2) {
+          const reviewTask = state.errors[index - 2];
+          queue.push({ taskId: reviewTask.id, mode: taskProgress(reviewTask).stage >= 3 ? "advanced" : "cloze", kind: "review" });
+        }
+      });
+      state.errors.slice(-2).forEach((task) => queue.push({ taskId: task.id, mode: taskProgress(task).stage >= 3 ? "advanced" : "cloze", kind: "review" }));
+      return queue;
+    }
+    function ensureExerciseQueue() {
+      const knownIds = new Set(state.errors.map((task) => task.id));
+      const queueIds = new Set((state.exerciseQueue || []).map((item) => item.taskId));
+      const queueIsStale = knownIds.size !== queueIds.size || [...knownIds].some((id) => !queueIds.has(id));
+      if (!Array.isArray(state.exerciseQueue) || !state.exerciseQueue.length || queueIsStale) {
+        state.exerciseQueue = buildExerciseQueue();
+        state.queueIndex = 0;
+      }
+      if (state.queueIndex >= state.exerciseQueue.length) state.queueIndex = 0;
+      const item = state.exerciseQueue[state.queueIndex];
+      state.currentId = item?.taskId || state.errors[0]?.id;
+      persist();
+    }
+    function currentQueueItem() { ensureExerciseQueue(); return state.exerciseQueue[state.queueIndex]; }
+    function currentTask() { const item = currentQueueItem(); return state.errors.find((task) => task.id === item.taskId) || state.errors[0]; }
+    function taskProgress(task) { return state.taskProgress[task.id] || { successes: 0, stage: 1 }; }
+    function stageMode(stage) { return stage >= 3 ? "advanced" : stage === 2 ? "cloze" : "puzzle"; }
+    function currentMode(task) { return state.selectedMode[task.id] || stageMode(taskProgress(task).stage); }
+    function getLevel() { return Math.min(30, Math.max(1, state.successes + 1)); }
+    function getKeyWords(task) {
+      const fromMap = keyWordsById[task.id] || [];
+      const mapped = fromMap.filter((word) => task.correction.toLocaleLowerCase("fr-FR").includes(word.toLocaleLowerCase("fr-FR")));
+      if (mapped.length) return mapped;
+      const sourceWords = new Set(tokenize(task.erreur).map(normalizeLoose));
+      return tokenize(task.correction).filter((word) => !sourceWords.has(normalizeLoose(word))).slice(0, 2);
+    }
+    function tokenize(sentence) { return String(sentence).match(/\S+/g) || []; }
+    function showToast(message) { const toast = $("#toast"); toast.textContent = message; toast.classList.add("show"); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove("show"), 2600); }
+    function updateStats() {
+      const total = state.errors.length || 1, mastered = state.mastered.length, level = getLevel();
+      const xp = Math.min(30, state.successes), percent = Math.round((xp / 30) * 100);
+      $("#levelStat").textContent = `Niveau ${level}`;
+      $("#xpStat").textContent = `${xp} / 30`;
+      $("#masteredStat").textContent = `${mastered} / ${total}`;
+      $("#xpFill").style.width = `${percent}%`;
+      $("#xpPercent").textContent = `${percent}%`;
+      $("#progressFill").style.width = `${Math.round((mastered / total) * 100)}%`;
+      $("#progressLabel").textContent = `${mastered} maîtrisée${mastered === 1 ? "" : "s"}`;
+      $("#progressTotal").textContent = `${total} au total`;
+      $("#notebookCount").textContent = state.errors.length;
+      $("#notebookMastered").textContent = mastered;
+      $("#notebookExamples").textContent = Object.values(state.examples).filter(Boolean).length;
+      const typing = state.typingErrors || [];
+      $("#typingCount").textContent = typing.length;
+      $("#typingWords").textContent = new Set(typing.map((error) => normalizeLoose(error.expected))).size;
+      $("#typingLast").textContent = typing.length ? new Date(typing[typing.length - 1].date).toLocaleDateString("fr-FR") : "—";
+      const stage = taskProgress(currentTask()).stage;
+      const labels = {
+        1: ["Étoile 1 · Débutant écrit", "Le puzzle t'aide à trouver le bon ordre."],
+        2: ["Étoile 2 · Intermédiaire", "Écris seulement les mots importants."],
+        3: ["Étoile 3 · Maître", "Écris ou dicte toute la phrase."]
+      };
+      $("#xpStageLabel").textContent = labels[stage][0];
+      $("#xpStageCopy").textContent = labels[stage][1];
+      [1, 2, 3].forEach((number) => $(`#star${number === 1 ? "One" : number === 2 ? "Two" : "Three"}`).classList.toggle("active", stage === number));
+    }
+    function renderMiniList() {
+      const items = state.errors.slice(0, 5).map((item) => {
+        const progress = taskProgress(item);
+        return `<div class="mini-item"><span>${escapeHtml(item.correction)}</span><span class="status-dot">${"★".repeat(progress.stage)}${progress.stage < 3 ? " · " + progress.successes + "/2" : " ✓"}</span></div>`;
+      });
+      $("#miniList").innerHTML = items.join("") + (state.errors.length > 5 ? `<div class="text-xs text-[#66716f] pt-1">+ ${state.errors.length - 5} autres dans le cahier</div>` : "");
+    }
+    function getQuizEnglishHint(task) {
+      const hints = {
+        1: ["Passé Composé", "I had a good day"], 2: ["Passé composé", "I played chess"], 3: ["Présent", "At the university library"],
+        4: ["Passé composé", "I handed in my statistics sheet 4"], 5: ["Présent", "And that's all"], 6: ["Passé composé", "I did not play against my friend"],
+        7: ["Passé composé", "That's why I said no"], 8: ["Présent", "The probabilities are a module"], 9: ["Conditionnel", "I would like to do a PhD"],
+        10: ["Conditionnel", "Yes sir, I would like a shawarma"], 11: ["Futur proche", "He is going to have a taco"],
+        12: ["Présent", "I can't speak or build a sentence"], 13: ["Présent", "I like statistics, but I prefer financial mathematics"],
+        14: ["Conditionnel", "I would like to start tomorrow"], 15: ["Présent", "For punctuation, I use voice dictation and I don't write"],
+        16: ["Présent / futur", "What is your vision for me in 30 days?"], 17: ["Présent", "In the sheet, I write"],
+        18: ["Présent", "The mistakes from yesterday"], 19: ["Présent", "In the sheet, I write the mistakes"],
+        20: ["Présent", "I write the correction"], 21: ["Impératif", "Yes, create that!"], 22: ["Présent", "In the same first file"],
+        23: ["Présent", "I am a beginner in writing"], 24: ["Présent", "The difficulty is increasing more and more"],
+        25: ["Présent / futur proche", "It is 2 o'clock. I am going to sleep."], 26: ["Passé composé", "I got Super Duolingo for one year"],
+        27: ["Présent", "I am ready to start today"]
+      };
+      const [tense, english] = hints[task.id] || ["Présent", task.correction];
+      return `<div class="quiz-english-hint">[Tense: ${escapeHtml(tense)}] “${escapeHtml(english)}”</div>`;
+    }
+    function shuffled(words, seed) {
+      return words.map((word, index) => ({ word, sort: (index * 17 + seed * 13) % 29 })).sort((a, b) => a.sort - b.sort).map((item) => item.word);
+    }
+    function getPuzzleWords(task) {
+      const correctionWords = tokenize(task.correction);
+      const traps = tokenize(task.erreur.replace(/[()/,?]/g, " ")).filter((word) => word.length > 2 && !correctionWords.some((correct) => normalizeLoose(correct) === normalizeLoose(word))).slice(0, 2);
+      return shuffled([...correctionWords, ...traps], task.id);
+    }
+    function renderPuzzle(task) {
+      const selected = state.puzzleChoices[task.id] || [];
+      const words = getPuzzleWords(task);
+      return `<p class="exercise-instruction">Clique sur les mots dans le bon ordre. Les deux mots jaunes sont des pièges.</p>${getQuizEnglishHint(task)}
+        <div class="label">Ta phrase en construction</div>
+        <div class="built-phrase" id="builtPhrase">${selected.length ? selected.map((word) => `<span class="built-chip">${escapeHtml(word)}</span>`).join("") : '<span class="built-empty">Les mots choisis apparaîtront ici…</span>'}</div>
+        <div class="label">Mots disponibles</div>
+        <div class="word-bank" id="wordBank">${words.map((word, index) => {
+          const used = selected.filter((chosen) => chosen === word).length;
+          const occurrence = words.slice(0, index + 1).filter((candidate) => candidate === word).length;
+          return `<button class="word-chip ${occurrence <= used ? "selected" : ""}" data-word="${escapeHtml(word)}" data-occurrence="${occurrence}" type="button">${escapeHtml(word)}</button>`;
+        }).join("")}</div>
+        <div class="exercise-tools"><button class="soft-button" id="undoPuzzle" type="button">↶ Retirer le dernier</button><button class="soft-button" id="clearPuzzle" type="button">Effacer</button></div>`;
+    }
+    function renderCloze(task) {
+      const keys = getKeyWords(task);
+      const keySet = new Set(keys.map((word) => normalizeLoose(word)));
+      const answer = state.answers[task.id] || "";
+      const words = tokenize(task.correction);
+      return `<p class="exercise-instruction">Écris seulement les mots importants. La phrase autour est déjà là pour t'aider.</p>${getQuizEnglishHint(task)}
+        <div class="cloze-line">${words.map((word, index) => {
+          const clean = normalizeLoose(word);
+          if (!keySet.has(clean)) return `<span>${escapeHtml(word)}</span>`;
+          const saved = answer.split("|")[index] || "";
+          return `<input class="cloze-input" data-index="${index}" data-answer="${escapeHtml(word)}" value="${escapeHtml(saved)}" placeholder="[____]" aria-label="Mot manquant ${index + 1}" />`;
+        }).join(" ")}</div>
+        <div class="exercise-tools"><button class="soft-button" id="letterHint" type="button">🔤 Indice Lettre</button><span class="letter-hint" id="letterHintText"></span></div>`;
+    }
+    function renderAdvanced(task) {
+      return `<div class="advanced-area"><p class="exercise-instruction">Écris ou prononce toute la phrase. Les accents et la ponctuation ne bloquent pas ta réussite.</p>${getQuizEnglishHint(task)}
+        <textarea id="answerInput" placeholder="Écris ta phrase ici, ou utilise le micro…" autocomplete="off" spellcheck="true">${escapeHtml(state.answers[task.id] || "")}</textarea>
+        <div class="advanced-tools"><button class="button button-small" id="speakButton" type="button">🎤 Parler</button><button class="soft-button" id="revealWord" type="button">💡 Révéler le prochain mot</button></div>
+        <div class="accent-row" aria-label="Insérer un accent"><span class="label" style="margin: 8px 4px 0 0; text-transform:none; letter-spacing:0;">Accents rapides</span>${["é","è","ê","à","ç","ù"].map((accent) => `<button class="accent-button" data-accent="${accent}" type="button">${accent}</button>`).join("")}</div>
+      </div>`;
+    }
+    function renderExampleField() {
+      return `<div class="field"><label class="label" for="exampleInput">Mon propre exemple <span style="font-weight:400;text-transform:none;">(optionnel)</span></label><input id="exampleInput" type="text" placeholder="Une phrase à moi pour réutiliser la règle…" autocomplete="off" spellcheck="true" value="${escapeHtml(state.examples[currentTask().id] || "")}" /></div>`;
+    }
+    function renderTask() {
+      const task = currentTask(); if (!task) return;
+      const index = state.errors.findIndex((item) => item.id === task.id) + 1;
+      const queueItem = currentQueueItem();
+      const mode = queueItem.mode || currentMode(task);
+      activeMode = mode;
+      $("#taskNumber").textContent = `${String(state.queueIndex + 1).padStart(2, "0")} / ${String(state.exerciseQueue.length).padStart(2, "0")}`;
+      $("#taskCategory").textContent = task.categorie;
+      $("#taskError").textContent = task.erreur;
+      $("#hintBox").textContent = task.regle;
+      $("#hintBox").classList.add("hidden");
+      $("#hintButton").textContent = "💡 Voir l'indice · la règle";
+      $$(".mode-button").forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+      $("#modeHelp").textContent = mode === "puzzle" ? "Commence avec les mots : clique simplement dans le bon ordre." : mode === "cloze" ? "La phrase est presque complète : écris les 1 ou 2 mots clés." : "Tu es prêt : écris ou dicte toute la phrase.";
+      $("#exerciseArea").innerHTML = mode === "puzzle" ? renderPuzzle(task) : mode === "cloze" ? renderCloze(task) : renderAdvanced(task);
+      $("#exerciseArea").insertAdjacentHTML("beforeend", renderExampleField());
+      $("#feedback").className = "hidden"; $("#feedback").innerHTML = "";
+      $("#nextButton").classList.add("hidden");
+      $("#checkButton").disabled = false;
+      $("#checkButton").textContent = mode === "puzzle" ? "Vérifier mon ordre →" : mode === "cloze" ? "Vérifier les mots →" : "Vérifier ma phrase →";
+      $("#formHint").textContent = mode === "advanced" ? "Validation douce : un accent ou une ponctuation oubliée ne bloque pas ta réussite." : "Tu peux te tromper : l'objectif est de comprendre, pas de tout savoir du premier coup.";
+      bindExerciseEvents();
+      updateStats();
+    }
+    function renderNotebook() {
+      const body = $("#notebookBody");
+      body.innerHTML = state.errors.map((item) => {
+        const progress = taskProgress(item), mastered = progress.stage >= 3;
+        return `<tr><td class="table-id">${String(item.id).padStart(2, "0")}</td><td><span class="category-pill">${escapeHtml(item.categorie)}</span></td><td>${escapeHtml(item.erreur)}</td><td class="table-correction">${escapeHtml(item.correction)}</td><td>${escapeHtml(state.examples[item.id] || "—")}</td><td>${mastered ? '<span class="status-dot">Maître ★★★</span>' : `<span class="text-[#66716f]">${"★".repeat(progress.stage)} · ${progress.successes}/2</span>`}</td></tr>`;
+      }).join("") || `<tr><td colspan="6"><div class="empty">Ton cahier est vide pour le moment.</div></td></tr>`;
+    }
+    function renderTypingErrors() {
+      const body = $("#typingBody");
+      const rows = (state.typingErrors || []).slice().reverse().map((error) => `<tr>
+        <td class="table-id">${new Date(error.date).toLocaleString("fr-FR")}</td>
+        <td>${escapeHtml(error.phrase)}</td>
+        <td class="table-correction">${escapeHtml(error.expected)}</td>
+        <td>${escapeHtml(error.typed || "—")}</td>
+        <td><span class="category-pill">${escapeHtml(error.type)}</span></td>
+      </tr>`);
+      body.innerHTML = rows.join("") || `<tr><td colspan="5"><div class="empty">Aucune faute de frappe enregistrée. Elles apparaîtront ici pendant les exercices d'écriture.</div></td></tr>`;
+    }
+    function renderVerbs() {
+      const grid = $("#verbsGrid");
+      const safeVerbs = learnedVerbs.map(normalizeVerb).filter((verb) => verb.infinitif && verb.temps.length);
+      $("#verbsCount").textContent = safeVerbs.length;
+      $("#tensesCount").textContent = new Set(safeVerbs.flatMap((verb) => verb.temps.map((tense) => tense.nom))).size;
+      grid.innerHTML = safeVerbs.length ? safeVerbs.map((verb, index) => {
+        const key = verb.infinitif.toLocaleLowerCase("fr-FR");
+        const tenseIndex = verbTenseSelections[key] || 0;
+        const tense = verb.temps[tenseIndex % verb.temps.length];
+        const rows = tense.formes.map((form, formIndex) => `<div class="conjugation-row">
+          <div class="conjugation-entry">
+            <label class="conjugation-pronoun" for="verbe-${escapeHtml(key)}-${formIndex}">${escapeHtml(PRONOUNS[formIndex])}</label>
+            <input id="verbe-${escapeHtml(key)}-${formIndex}" class="verbe-input" data-verb-key="${escapeHtml(key)}" data-form-index="${formIndex}" type="text" placeholder="Écris le verbe..." autocomplete="off" aria-label="${escapeHtml(PRONOUNS[formIndex])} ${escapeHtml(verb.infinitif)}">
+          </div>
+          <div class="conjugation-correction hidden" data-verb-correction="${escapeHtml(key)}" data-form-index="${formIndex}">${escapeHtml(form)}</div>
+        </div>`).join("");
+        const fullAudio = `${verb.infinitif}. ${tense.exemple}`;
+        return `<article class="verb-card">
+          <div class="verb-card-head"><div><h3 class="verb-title">${escapeHtml(verb.infinitif)}</h3><div class="verb-translation">${escapeHtml(verb.anglais || "Traduction non renseignée")}</div></div><button class="tense-badge" data-tense-key="${escapeHtml(key)}" type="button" title="Changer de temps">[${escapeHtml(tense.nom)}]</button></div>
+          <div class="verb-card-body">
+            <div class="verb-card-tools"><button class="button button-small" data-verb-check="${escapeHtml(key)}" type="button">Vérifier</button><button class="soft-button" data-verb-reveal="${escapeHtml(key)}" type="button">👁️ Voir / Masquer les réponses</button></div>
+            <div class="conjugation-grid">${rows}</div>
+            <div class="verb-check-result" data-verb-result="${escapeHtml(key)}" aria-live="polite"></div>
+            <div class="example-fr">${escapeHtml(tense.exemple || "Ajoute une phrase d'exemple dans ton fichier JSON.")}</div>
+            <div class="example-en">${escapeHtml(tense.exempleAnglais || "English example not provided.")}</div>
+            <button class="button button-small verb-audio" data-verb-audio="${escapeHtml(fullAudio)}" type="button">🔊 Écouter</button>
+          </div>
+        </article>`;
+      }).join("") : `<div class="empty">Aucun verbe disponible. Importe un fichier JSON pour commencer.</div>`;
+      $$("[data-verb-audio]").forEach((button) => button.addEventListener("click", () => speakText(button.dataset.verbAudio)));
+      $$(".tense-badge").forEach((button) => button.addEventListener("click", () => {
+        const verb = safeVerbs.find((item) => item.infinitif.toLocaleLowerCase("fr-FR") === button.dataset.tenseKey);
+        const key = button.dataset.tenseKey;
+        verbTenseSelections[key] = ((verbTenseSelections[key] || 0) + 1) % verb.temps.length;
+        renderVerbs();
+      }));
+      $$("[data-verb-check]").forEach((button) => button.addEventListener("click", () => {
+        const key = button.dataset.verbCheck;
+        const verb = safeVerbs.find((item) => item.infinitif.toLocaleLowerCase("fr-FR") === key);
+        const expected = verb.temps[(verbTenseSelections[key] || 0) % verb.temps.length].formes;
+        const inputs = $$(`.verbe-input[data-verb-key="${CSS.escape(key)}"]`);
+        let correct = 0;
+        inputs.forEach((input, inputIndex) => {
+          const isCorrect = normalizeLoose(input.value) === normalizeLoose(expected[inputIndex]);
+          input.classList.toggle("answer-correct", isCorrect);
+          input.classList.toggle("answer-wrong", !isCorrect);
+          const correction = $(`[data-verb-correction="${CSS.escape(key)}"][data-form-index="${inputIndex}"]`);
+          if (correction) correction.classList.toggle("hidden", isCorrect);
+          if (isCorrect) correct += 1;
+        });
+        const result = $(`[data-verb-result="${CSS.escape(key)}"]`);
+        result.textContent = correct === expected.length ? "Bravo, toutes les formes sont correctes ✅" : `${correct}/${expected.length} forme${expected.length > 1 ? "s" : ""} correcte${correct > 1 ? "s" : ""}.`;
+        result.style.color = correct === expected.length ? "#047857" : "#B91C1C";
+      }));
+      $$("[data-verb-reveal]").forEach((button) => button.addEventListener("click", () => {
+        const key = button.dataset.verbReveal;
+        const verb = safeVerbs.find((item) => item.infinitif.toLocaleLowerCase("fr-FR") === key);
+        const expected = verb.temps[(verbTenseSelections[key] || 0) % verb.temps.length].formes;
+        const inputs = $$(`.verbe-input[data-verb-key="${CSS.escape(key)}"]`);
+        const corrections = $$(`[data-verb-correction="${CSS.escape(key)}"]`);
+        const showing = corrections[0] && !corrections[0].classList.contains("hidden");
+        corrections.forEach((correction) => correction.classList.toggle("hidden", showing));
+        inputs.forEach((input) => { input.value = ""; input.classList.remove("answer-correct", "answer-wrong"); });
+      }));
+    }
+    function renderAll() { updateStats(); renderTask(); renderMiniList(); renderNotebook(); renderTypingErrors(); renderVerbs(); }
+    function showView(name) {
+      $$(".nav-button").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
+      $("#trainingView").classList.toggle("active", name === "training");
+      $("#notebookView").classList.toggle("active", name === "notebook");
+      $("#typingView").classList.toggle("active", name === "typing");
+      $("#verbsView").classList.toggle("active", name === "verbs");
+      $("#viewEyebrow").textContent = name === "training" ? "Session du jour · progression douce" : name === "typing" ? "Suivi précis · mécanique de l'écrit" : name === "verbs" ? "Révision guidée · conjugaison française" : "Mémoire longue · tout garder sous les yeux";
+      $("#viewTitle").textContent = name === "training" ? "Trouver la bonne phrase, sans stress." : name === "typing" ? "Corriger ses petites fautes de frappe." : name === "verbs" ? "Conjuguer pour parler plus naturellement." : "Ton cahier de français vivant.";
+      $("#viewDescription").textContent = name === "training" ? "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt." : name === "typing" ? "Un accent ou une lettre inversée est une information utile : on la garde pour mieux la revoir." : name === "verbs" ? "Les formes, le sens anglais et la prononciation restent réunis sur chaque carte." : "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment.";
+      if (name === "notebook") renderNotebook();
+      if (name === "typing") renderTypingErrors();
+      if (name === "verbs") renderVerbs();
+    }
+    function currentResponse(task) {
+      if (activeMode === "puzzle") return (state.puzzleChoices[task.id] || []).join(" ");
+      if (activeMode === "cloze") {
+        const values = [...document.querySelectorAll(".cloze-input")].sort((a, b) => Number(a.dataset.index) - Number(b.dataset.index));
+        const words = tokenize(task.correction);
+        values.forEach((input) => words[Number(input.dataset.index)] = input.value.trim());
+        state.answers[task.id] = words.join("|");
+        return words.join(" ");
+      }
+      return $("#answerInput")?.value || "";
+    }
+    function makeDiff(answer, correction) {
+      const a = normalizeLoose(answer).split(" "), b = normalizeLoose(correction).split(" ");
+      return Array.from({ length: Math.max(a.length, b.length) }, (_, index) => a[index] === b[index] ? `<span class="same">${escapeHtml(a[index] || "")}</span>` : a[index] ? `<span class="wrong">${escapeHtml(a[index])}</span>` : `<span class="missing">${escapeHtml(b[index])}</span>`).join("");
+    }
+    function recordTypingErrors(task, answer) {
+      if (activeMode === "puzzle") return;
+      const expectedWords = tokenize(task.correction);
+      const typedWords = tokenize(answer);
+      expectedWords.forEach((expected, index) => {
+        const typed = typedWords[index] || "";
+        if (normalizeStrict(expected) === normalizeStrict(typed)) return;
+        const type = normalizeLoose(expected) === normalizeLoose(typed) ? "Accent / ponctuation" : "Orthographe";
+        state.typingErrors.push({
+          date: new Date().toISOString(),
+          taskId: task.id,
+          phrase: task.correction,
+          expected,
+          typed: typed || "(mot absent)",
+          type
+        });
+      });
+      if (state.typingErrors.length > 200) state.typingErrors = state.typingErrors.slice(-200);
+    }
+    function explainFeedback(task, correct, answer) {
+      const comparison = correct
+        ? `<div style="margin-top:10px;"><strong>Ta réponse :</strong> ${escapeHtml(answer)}</div>`
+        : `<div class="diff">${makeDiff(answer, task.correction)}</div><div style="margin-top:10px;"><strong>Phrase modèle :</strong> ${escapeHtml(task.correction)}</div>`;
+      return `<span class="feedback-title">${correct ? "Bravo, tu as trouvé ✅" : "On corrige ensemble 📝"}</span>
+        ${comparison}
+        <div style="margin-top:14px;"><strong>Pourquoi ?</strong> ${escapeHtml(task.regle)}</div>
+        <div style="margin-top:8px;"><strong>À retenir :</strong> la correction utilise cette règle pour rendre la phrase naturelle et correcte.</div>`;
+    }
+    function checkAnswer() {
+      const task = currentTask(); if (!task) return;
+      const answer = currentResponse(task);
+      state.examples[task.id] = $("#exampleInput")?.value.trim() || state.examples[task.id] || "";
+      state.attempts += 1; persist();
+      const feedback = $("#feedback");
+      const isAdvanced = activeMode === "advanced";
+      const correct = isAdvanced ? normalizeLoose(answer) === normalizeLoose(task.correction) : normalizeStrict(answer) === normalizeStrict(task.correction);
+      recordTypingErrors(task, answer);
+      if (correct) {
+        const progress = taskProgress(task);
+        progress.successes += 1;
+        if (progress.successes >= 2 && progress.stage < 3) {
+          progress.stage += 1; progress.successes = 0;
+          delete state.selectedMode[task.id];
+          showToast(`Bravo ! Cette phrase passe à l'Étoile ${progress.stage}.`);
+        }
+        state.taskProgress[task.id] = progress;
+        state.successes += 1;
+        if (progress.stage >= 3 && !state.mastered.includes(task.id)) state.mastered.push(task.id);
+        persist();
+        feedback.className = "feedback success explanation";
+        const gentle = isAdvanced && normalizeStrict(answer) !== normalizeStrict(task.correction) ? "<br><small>Très bien : les accents ou la ponctuation peuvent encore être peaufinés.</small>" : "";
+        feedback.innerHTML = explainFeedback(task, true, answer) + `<div style="margin-top:10px;color:#315d3c;">${progress.stage < 3 ? `${2 - progress.successes} réussite${2 - progress.successes > 1 ? "s" : ""} pour passer à l'étoile suivante.` : "Tu es au niveau maître pour cette phrase !"}${gentle}</div>`;
+      } else {
+        feedback.className = "feedback error explanation";
+        feedback.innerHTML = explainFeedback(task, false, answer);
+      }
+      persist();
+      $("#checkButton").disabled = true;
+      $("#nextButton").classList.remove("hidden");
+      renderMiniList(); updateStats(); renderTypingErrors();
+      feedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function goToNextExercise() {
+      ensureExerciseQueue();
+      state.queueIndex += 1;
+      if (state.queueIndex >= state.exerciseQueue.length) {
+        state.exerciseQueue = buildExerciseQueue();
+        state.queueIndex = 0;
+        showToast("Cycle terminé : on recommence avec les phrases à revoir.");
+      }
+      state.currentId = state.exerciseQueue[state.queueIndex].taskId;
+      persist();
+      renderTask();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function insertAccent(accent) {
+      const input = $("#answerInput"); if (!input) return;
+      const start = input.selectionStart ?? input.value.length, end = input.selectionEnd ?? input.value.length;
+      input.value = input.value.slice(0, start) + accent + input.value.slice(end); input.focus(); input.setSelectionRange(start + accent.length, start + accent.length);
+    }
+    function speakSentence() {
+      const task = currentTask(); if (!("speechSynthesis" in window) || !task) { showToast("La lecture audio n'est pas disponible dans ce navigateur."); return; }
+      window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(task.correction); utterance.lang = "fr-FR"; utterance.rate = .86; window.speechSynthesis.speak(utterance);
+    }
+    function setupRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { showToast("La dictée vocale n'est pas disponible ici. Essaie Chrome ou Edge."); return null; }
+      const engine = new SpeechRecognition(); engine.lang = "fr-FR"; engine.interimResults = false; engine.maxAlternatives = 1;
+      engine.onstart = () => { $("#speakButton")?.classList.add("speech-listening"); if ($("#speakButton")) $("#speakButton").textContent = "🎤 J'écoute…"; };
+      engine.onend = () => { $("#speakButton")?.classList.remove("speech-listening"); if ($("#speakButton")) $("#speakButton").textContent = "🎤 Parler"; };
+      engine.onerror = () => showToast("Je n'ai pas entendu la phrase. Tu peux réessayer doucement.");
+      engine.onresult = (event) => { const input = $("#answerInput"); if (input) { input.value = event.results[0][0].transcript; state.answers[currentTask().id] = input.value; persist(); } };
+      return engine;
+    }
+    function bindExerciseEvents() {
+      $$(".word-chip").forEach((button) => button.addEventListener("click", () => {
+        const task = currentTask(), selected = state.puzzleChoices[task.id] || [];
+        selected.push(button.dataset.word); state.puzzleChoices[task.id] = selected; persist(); renderTask();
+      }));
+      $("#undoPuzzle")?.addEventListener("click", () => { const task = currentTask(), selected = state.puzzleChoices[task.id] || []; selected.pop(); state.puzzleChoices[task.id] = selected; persist(); renderTask(); });
+      $("#clearPuzzle")?.addEventListener("click", () => { state.puzzleChoices[currentTask().id] = []; persist(); renderTask(); });
+      $("#letterHint")?.addEventListener("click", () => {
+        const keys = getKeyWords(currentTask()); $("#letterHintText").textContent = keys.map((word) => `${word[0]}…`).join(" · ");
+      });
+      $("#speakButton")?.addEventListener("click", () => { recognition = recognition || setupRecognition(); recognition?.start(); });
+      $("#revealWord")?.addEventListener("click", () => {
+        const task = currentTask(), input = $("#answerInput"); if (!input) return;
+        const typedWords = tokenize(input.value), targetWords = tokenize(task.correction), next = targetWords[typedWords.length];
+        if (!next) { showToast("Tu as déjà révélé toute la phrase."); return; }
+        input.value = `${input.value.trim()} ${next}`.trim(); input.focus(); showToast(`Mot révélé : « ${next} »`);
+      });
+      $$(".accent-button").forEach((button) => button.addEventListener("click", () => insertAccent(button.dataset.accent)));
+      $("#exampleInput")?.addEventListener("input", () => { state.examples[currentTask().id] = $("#exampleInput").value; persist(); updateStats(); });
+    }
+    function openModal() { $("#modalBackdrop").classList.remove("hidden"); $("#newCategory").focus(); }
+    function closeModal() { $("#modalBackdrop").classList.add("hidden"); ["newCategory", "newError", "newCorrection", "newRule"].forEach((id) => { $(`#${id}`).value = ""; }); }
+    function saveNewError() {
+      const categorie = $("#newCategory").value.trim(), erreur = $("#newError").value.trim(), correction = $("#newCorrection").value.trim(), regle = $("#newRule").value.trim();
+      if (!categorie || !erreur || !correction || !regle) { showToast("Complète les quatre champs pour ajouter l'erreur."); return; }
+      const id = Math.max(0, ...state.errors.map((item) => item.id)) + 1;
+      state.errors.push({ id, categorie, erreur, correction, regle });
+      state.currentId = id;
+      persist(); renderAll(); closeModal(); showToast("Nouvelle erreur ajoutée au cahier."); showView("training");
+    }
+    function download(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename; link.click(); URL.revokeObjectURL(link.href);
+    }
+    function exportCsv() {
+      const rows = [["id", "categorie", "erreur", "correction", "regle", "mon_exemple", "maitrisee"], ...state.errors.map((item) => [item.id, item.categorie, item.erreur, item.correction, item.regle, state.examples[item.id] || "", state.mastered.includes(item.id) ? "oui" : "non"])];
+      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";")).join("\n");
+      download("phrase-juste-cahier.csv", "\uFEFF" + csv, "text/csv;charset=utf-8");
+    }
+    function exportJson() { download("phrase-juste-cahier.json", JSON.stringify(state, null, 2), "application/json;charset=utf-8"); }
+    function exportAllData() {
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        version: 2,
+        errors: state.errors,
+        progress: {
+          answers: state.answers,
+          examples: state.examples,
+          mastered: state.mastered,
+          attempts: state.attempts,
+          successes: state.successes,
+          taskProgress: state.taskProgress,
+          selectedMode: state.selectedMode
+        },
+        typingErrors: state.typingErrors || [],
+        queue: {
+          exerciseQueue: state.exerciseQueue || [],
+          queueIndex: state.queueIndex || 0,
+          currentId: state.currentId
+        }
+      };
+      download("phrase-juste-sauvegarde.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+      showToast("Sauvegarde JSON téléchargée.");
+    }
+    function importVerbsFromFile(event) {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || ""));
+          const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed.verbes) ? parsed.verbes : null;
+          if (!list) throw new Error("Le fichier doit contenir une liste JSON de verbes.");
+          const imported = list.map(normalizeVerb).filter((verb) => verb.infinitif && verb.temps.length && verb.temps.some((tense) => tense.formes.some(Boolean)));
+          if (!imported.length) throw new Error("Aucun verbe valide trouvé. Vérifie infinitif, temps et formes.");
+          const byKey = new Map(learnedVerbs.map((verb) => [normalizeVerb(verb).infinitif.toLocaleLowerCase("fr-FR"), verb]));
+          imported.forEach((verb) => byKey.set(verb.infinitif.toLocaleLowerCase("fr-FR"), verb));
+          learnedVerbs = [...byKey.values()];
+          localStorage.setItem(VERBS_STORAGE_KEY, JSON.stringify(learnedVerbs));
+          renderVerbs();
+          showToast(`${imported.length} verbe${imported.length > 1 ? "s" : ""} importé${imported.length > 1 ? "s" : ""} avec succès !`);
+          showView("verbs");
+        } catch (error) {
+          showToast(`Import des verbes impossible : ${error.message}`);
+        }
+      };
+      reader.onerror = () => showToast("Import des verbes impossible : le fichier n'a pas pu être lu.");
+      reader.readAsText(file, "UTF-8");
+    }
+    function validateImportedPhrase(item, index) {
+      const required = ["id", "categorie", "erreur", "correction", "regle"];
+      if (!item || typeof item !== "object" || Array.isArray(item)) return `L'élément ${index + 1} n'est pas un objet.`;
+      if (!required.every((key) => Object.prototype.hasOwnProperty.call(item, key))) return `L'élément ${index + 1} ne contient pas toutes les propriétés requises.`;
+      if (!Number.isInteger(item.id) || item.id <= 0) return `L'ID de l'élément ${index + 1} doit être un entier positif.`;
+      if (required.slice(1).some((key) => typeof item[key] !== "string" || !item[key].trim())) return `Les textes de l'élément ${index + 1} doivent être remplis.`;
+      return "";
+    }
+    function importPhrasesFromFile(event) {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || ""));
+          if (!Array.isArray(parsed)) throw new Error("Le fichier doit contenir une liste JSON d'objets.");
+          const validationError = parsed.map(validateImportedPhrase).find(Boolean);
+          if (validationError) throw new Error(validationError);
+          const existingIds = new Set(state.errors.map((item) => item.id));
+          const incomingIds = new Set();
+          const uniqueNew = parsed.filter((item) => {
+            if (existingIds.has(item.id) || incomingIds.has(item.id)) return false;
+            incomingIds.add(item.id);
+            return true;
+          }).map((item) => ({
+            id: item.id,
+            categorie: item.categorie.trim(),
+            erreur: item.erreur.trim(),
+            correction: item.correction.trim(),
+            regle: item.regle.trim()
+          }));
+          state.errors.push(...uniqueNew);
+          state.exerciseQueue = buildExerciseQueue();
+          state.queueIndex = 0;
+          state.currentId = state.exerciseQueue[0]?.taskId || state.errors[0]?.id;
+          persist();
+          renderAll();
+          showToast(`${uniqueNew.length} nouvelles phrases ont été ajoutées avec succès !`);
+        } catch (error) {
+          showToast(`Import impossible : ${error.message}`);
+        }
+      };
+      reader.onerror = () => showToast("Import impossible : le fichier n'a pas pu être lu.");
+      reader.readAsText(file, "UTF-8");
+    }
+
+    $$(".nav-button").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
+    $$(".mode-button").forEach((button) => button.addEventListener("click", () => {
+      const task = currentTask();
+      const queueItem = currentQueueItem();
+      queueItem.mode = button.dataset.mode;
+      state.selectedMode[task.id] = button.dataset.mode;
+      state.puzzleChoices[task.id] = [];
+      persist();
+      renderTask();
+    }));
+    $("#hintButton").addEventListener("click", () => { const box = $("#hintBox"); const hidden = box.classList.toggle("hidden"); $("#hintButton").textContent = hidden ? "💡 Voir l'indice · la règle" : "↟ Masquer l'indice"; });
+    $("#listenButton").addEventListener("click", speakSentence);
+    $("#checkButton").addEventListener("click", checkAnswer);
+    $("#nextButton").addEventListener("click", goToNextExercise);
+    $("#addErrorTop").addEventListener("click", openModal);
+    $("#closeModal").addEventListener("click", closeModal);
+    $("#cancelModal").addEventListener("click", closeModal);
+    $("#modalBackdrop").addEventListener("click", (event) => { if (event.target === $("#modalBackdrop")) closeModal(); });
+    $("#saveNewError").addEventListener("click", saveNewError);
+    $("#exportCsv").addEventListener("click", exportCsv);
+    $("#exportJson").addEventListener("click", exportJson);
+    $("#importJsonButton").addEventListener("click", () => $("#importJsonInput").click());
+    $("#importJsonButtonNotebook").addEventListener("click", () => $("#importJsonInput").click());
+    $("#importJsonInput").addEventListener("change", importPhrasesFromFile);
+    $("#exportDataButton").addEventListener("click", exportAllData);
+    $("#exportDataButtonNotebook").addEventListener("click", exportAllData);
+    $("#importVerbsButton").addEventListener("click", () => $("#importVerbsInput").click());
+    $("#importVerbsInput").addEventListener("change", importVerbsFromFile);
+    $("#resetProgress").addEventListener("click", () => {
+      if (!confirm("Réinitialiser toutes les réponses, exemples et validations locales ?")) return;
+      state = structuredClone(defaultState); persist(); renderAll(); showToast("Progression réinitialisée.");
+    });
+    document.addEventListener("keydown", (event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") checkAnswer(); });
+    renderAll();
+  </script>
+</body>
+</html>
