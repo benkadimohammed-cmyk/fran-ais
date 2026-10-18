@@ -67,6 +67,7 @@
     }
     button, input, textarea { font: inherit; }
     button { cursor: pointer; }
+    button, .button, .soft-button, .mode-button { min-height: 44px; }
     button:focus-visible, input:focus-visible, textarea:focus-visible {
       outline: 3px solid rgba(239, 185, 77, .75);
       outline-offset: 3px;
@@ -190,6 +191,16 @@
     .example-en { color: var(--muted); font-size: 12px; line-height: 1.45; }
     .verb-audio { margin-top: 15px; }
     .quiz-english-hint { margin: -6px 0 13px; color: #607168; font-size: 12px; font-style: italic; }
+    .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .rule-card { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.62); box-shadow: 0 16px 42px rgba(16,20,21,.07); }
+    .rule-card h3 { margin: 0 0 8px; font-family: "Fraunces", serif; font-size: 21px; }
+    .rule-copy { color: #4f5d56; font-size: 13px; line-height: 1.55; }
+    .rule-example { margin-top: 13px; padding: 10px 12px; border-radius: 9px; font-size: 13px; line-height: 1.45; }
+    .rule-example.bad { background: #f9ddd3; color: #713b30; }
+    .rule-example.good { background: #dcebd4; color: #234528; }
+    .sync-panel { display: grid; gap: 14px; max-width: 760px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.58); }
+    .sync-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .sync-code { min-height: 110px; font-family: "Space Mono", monospace; font-size: 12px; }
     .field { margin-top: 17px; }
     textarea, input[type="text"] { width: 100%; border: 1px solid #bdc7c1; border-radius: 10px; background: #fffefa; color: var(--ink); padding: 13px 14px; transition: border-color .2s, box-shadow .2s; }
     textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
@@ -279,6 +290,8 @@
         <button class="nav-button" data-view="notebook"><span class="nav-icon">▤</span><span>Mon Cahier</span></button>
         <button class="nav-button" data-view="typing"><span class="nav-icon">⌁</span><span>Fautes de frappe</span></button>
         <button class="nav-button" data-view="verbs"><span class="nav-icon">📘</span><span>Verbes &amp; Conjugaison</span></button>
+        <button class="nav-button" data-view="rules"><span class="nav-icon">📜</span><span>Mes Règles d'Or</span></button>
+        <button class="nav-button" data-view="sync"><span class="nav-icon">🔄</span><span>Sauvegarde &amp; Synchronisation</span></button>
       </nav>
       <div class="sidebar-note">
         <strong>Rituel conseillé</strong>
@@ -443,6 +456,34 @@
         </div>
         <div class="verb-grid" id="verbsGrid"></div>
       </section>
+
+      <section class="view" id="rulesView">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <div class="eyebrow">Mémoire grammaticale</div>
+            <h2 class="font-display text-3xl tracking-tight mb-1">📜 Mes Règles d'Or</h2>
+            <p class="text-sm text-[#66716f]">Retrouve les règles essentielles et les erreurs à éviter.</p>
+          </div>
+          <div style="min-width:min(100%, 320px);"><label class="label" for="rulesSearch">Recherche rapide</label><input id="rulesSearch" type="text" placeholder="Ex. futur, accord, adjectif" autocorrect="off" autocapitalize="none" spellcheck="false"></div>
+        </div>
+        <div class="rules-grid" id="rulesGrid"></div>
+      </section>
+
+      <section class="view" id="syncView">
+        <div class="eyebrow">PC ↔ téléphone · sans serveur</div>
+        <h2 class="font-display text-3xl tracking-tight mb-2">🔄 Sauvegarde &amp; Synchronisation</h2>
+        <p class="text-sm text-[#66716f] mb-5">Exporte un fichier ou copie un code pour transférer ta progression entre appareils.</p>
+        <div class="sync-panel">
+          <div class="sync-actions">
+            <button class="button button-accent" id="syncExportButton">📤 Exporter ma progression (JSON)</button>
+            <button class="button" id="syncImportButton">📥 Importer ma progression (JSON)</button>
+            <input id="syncImportInput" type="file" accept=".json,application/json" hidden>
+            <button class="button" id="copySyncButton">📋 Copier le code de synchronisation (Texte)</button>
+          </div>
+          <div class="field"><label class="label" for="syncCodeInput">Coller le code de synchronisation</label><textarea class="sync-code" id="syncCodeInput" placeholder="Colle ici le code reçu sur ton téléphone…" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea></div>
+          <button class="button button-primary" id="applySyncButton">Valider le code</button>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -498,6 +539,10 @@
 
     const STORAGE_KEY = "phrase-juste-state-v2";
     const VERBS_STORAGE_KEY = "mesVerbesAppris";
+    const QUIZ_PROGRESS_KEY = "francais_quiz_progress";
+    const VERBS_DATA_KEY = "francais_verbes_data";
+    const TYPING_ERRORS_KEY = "francais_typing_errors";
+    const RULES_KEY = "francais_regles_grammaire";
     const PRONOUNS = ["Je", "Tu", "Il / Elle / On", "Nous", "Vous", "Ils / Elles"];
     const TENSE_ORDER = ["Présent", "Passé Composé", "Futur Proche"];
     const defaultVerbs = [
@@ -548,15 +593,28 @@
     let verbTenseSelections = {};
     let activeMode = "puzzle";
     let recognition = null;
+    const coreRules = [
+      { id: "core-cest", titre: "L'accord neutre avec C'EST", explication: "Après « c'est », on utilise généralement le masculin singulier pour présenter une qualité.", erreur: "C'est belle.", correction: "C'est très beau." },
+      { id: "core-it-will-be", titre: "Traduire IT WILL BE", explication: "Pour parler du futur, utilise « ce sera » ou « ça va être ».", erreur: "Ça est demain.", correction: "Ce sera demain." },
+      { id: "core-meilleur", titre: "PLUS BON vs MEILLEUR", explication: "Pour comparer la qualité, on dit « meilleur » ou « meilleure », pas « plus bon ».", erreur: "Ce plat est plus bon.", correction: "Ce plat est meilleur." },
+      { id: "core-etre-avoir", titre: "Le verbe ÊTRE et AVOIR", explication: "Mémorise les couples « ils sont » (être) et « ils ont » (avoir) pour éviter la confusion.", erreur: "Ils ont fatigués.", correction: "Ils sont fatigués." },
+      { id: "core-passe-er", titre: "Le Passé Composé régulier (-ER)", explication: "Un verbe régulier en -er prend avoir et se termine en -é au passé composé.", erreur: "J'ai jouer au tennis.", correction: "J'ai joué au tennis." }
+    ];
 
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => [...document.querySelectorAll(selector)];
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
     const normalizeLoose = (value) => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[¿?!.,;:'"]/g, "").replace(/\s+/g, " ").trim().toLocaleLowerCase("fr-FR");
     const normalizeStrict = (value) => String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("fr-FR");
+    function safeStorageGet(key, fallback = null) {
+      try { return localStorage.getItem(key) ?? fallback; } catch (error) { console.warn(`Lecture locale impossible (${key}).`, error); return fallback; }
+    }
+    function safeStorageSet(key, value) {
+      try { localStorage.setItem(key, value); return true; } catch (error) { console.warn(`Sauvegarde locale impossible (${key}).`, error); showToast("La sauvegarde locale est indisponible sur cet appareil."); return false; }
+    }
     function loadVerbs() {
       try {
-        const saved = JSON.parse(localStorage.getItem(VERBS_STORAGE_KEY) || "null");
+        const saved = JSON.parse(safeStorageGet(VERBS_DATA_KEY, safeStorageGet(VERBS_STORAGE_KEY, "null")));
         if (!Array.isArray(saved) || !saved.length) return structuredClone(defaultVerbs);
         const defaults = new Map(defaultVerbs.map((verb) => [verb.infinitif.toLocaleLowerCase("fr-FR"), verb]));
         const merged = new Map(defaultVerbs.map((verb) => [verb.infinitif.toLocaleLowerCase("fr-FR"), verb]));
@@ -612,18 +670,26 @@
 
     function loadState() {
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem("phrase-juste-state-v1"));
+        const saved = JSON.parse(safeStorageGet(QUIZ_PROGRESS_KEY, safeStorageGet(STORAGE_KEY, safeStorageGet("phrase-juste-state-v1"))));
         if (!saved) return structuredClone(defaultState);
         const savedErrors = Array.isArray(saved.errors) ? saved.errors : [];
         const existingIds = new Set(savedErrors.map((item) => item.id));
         const mergedErrors = [...savedErrors, ...initialErrors.filter((item) => !existingIds.has(item.id))];
-        return { ...structuredClone(defaultState), ...saved, errors: mergedErrors.length ? mergedErrors : initialErrors, taskProgress: saved.taskProgress || {}, typingErrors: saved.typingErrors || [] };
+        let storedTyping = [];
+        try { storedTyping = JSON.parse(safeStorageGet(TYPING_ERRORS_KEY, "[]")); } catch (error) { console.warn("Fautes locales invalides.", error); }
+        return { ...structuredClone(defaultState), ...saved, errors: mergedErrors.length ? mergedErrors : initialErrors, taskProgress: saved.taskProgress || {}, typingErrors: saved.typingErrors || storedTyping || [] };
       } catch (error) {
         console.warn("Impossible de charger la progression locale.", error);
         return structuredClone(defaultState);
       }
     }
-    function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function persist() {
+      safeStorageSet(STORAGE_KEY, JSON.stringify(state));
+      safeStorageSet(QUIZ_PROGRESS_KEY, JSON.stringify(state));
+      safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs || []));
+      safeStorageSet(TYPING_ERRORS_KEY, JSON.stringify(state.typingErrors || []));
+      safeStorageSet(RULES_KEY, JSON.stringify(buildRules()));
+    }
     function buildExerciseQueue() {
       const queue = [];
       state.errors.forEach((task, index) => {
@@ -755,13 +821,13 @@
     }
     function renderAdvanced(task) {
       return `<div class="advanced-area"><p class="exercise-instruction">Écris ou prononce toute la phrase. Les accents et la ponctuation ne bloquent pas ta réussite.</p>${getQuizEnglishHint(task)}
-        <textarea id="answerInput" placeholder="Écris ta phrase ici, ou utilise le micro…" autocomplete="off" spellcheck="true">${escapeHtml(state.answers[task.id] || "")}</textarea>
+        <textarea id="answerInput" placeholder="Écris ta phrase ici, ou utilise le micro…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">${escapeHtml(state.answers[task.id] || "")}</textarea>
         <div class="advanced-tools"><button class="button button-small" id="speakButton" type="button">🎤 Parler</button><button class="soft-button" id="revealWord" type="button">💡 Révéler le prochain mot</button></div>
         <div class="accent-row" aria-label="Insérer un accent"><span class="label" style="margin: 8px 4px 0 0; text-transform:none; letter-spacing:0;">Accents rapides</span>${["é","è","ê","à","ç","ù"].map((accent) => `<button class="accent-button" data-accent="${accent}" type="button">${accent}</button>`).join("")}</div>
       </div>`;
     }
     function renderExampleField() {
-      return `<div class="field"><label class="label" for="exampleInput">Mon propre exemple <span style="font-weight:400;text-transform:none;">(optionnel)</span></label><input id="exampleInput" type="text" placeholder="Une phrase à moi pour réutiliser la règle…" autocomplete="off" spellcheck="true" value="${escapeHtml(state.examples[currentTask().id] || "")}" /></div>`;
+      return `<div class="field"><label class="label" for="exampleInput">Mon propre exemple <span style="font-weight:400;text-transform:none;">(optionnel)</span></label><input id="exampleInput" type="text" placeholder="Une phrase à moi pour réutiliser la règle…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" value="${escapeHtml(state.examples[currentTask().id] || "")}" /></div>`;
     }
     function renderTask() {
       const task = currentTask(); if (!task) return;
@@ -817,7 +883,7 @@
         const rows = tense.formes.map((form, formIndex) => `<div class="conjugation-row">
           <div class="conjugation-entry">
             <label class="conjugation-pronoun" for="verbe-${escapeHtml(key)}-${formIndex}">${escapeHtml(PRONOUNS[formIndex])}</label>
-            <input id="verbe-${escapeHtml(key)}-${formIndex}" class="verbe-input" data-verb-key="${escapeHtml(key)}" data-form-index="${formIndex}" type="text" placeholder="Écris le verbe..." autocomplete="off" aria-label="${escapeHtml(PRONOUNS[formIndex])} ${escapeHtml(verb.infinitif)}">
+            <input id="verbe-${escapeHtml(key)}-${formIndex}" class="verbe-input" data-verb-key="${escapeHtml(key)}" data-form-index="${formIndex}" type="text" placeholder="Écris le verbe..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-label="${escapeHtml(PRONOUNS[formIndex])} ${escapeHtml(verb.infinitif)}">
           </div>
           <div class="conjugation-correction hidden" data-verb-correction="${escapeHtml(key)}" data-form-index="${formIndex}">${escapeHtml(form)}</div>
         </div>`).join("");
@@ -870,19 +936,45 @@
         inputs.forEach((input) => { input.value = ""; input.classList.remove("answer-correct", "answer-wrong"); });
       }));
     }
-    function renderAll() { updateStats(); renderTask(); renderMiniList(); renderNotebook(); renderTypingErrors(); renderVerbs(); }
+    function buildRules() {
+      const byKey = new Map(coreRules.map((rule) => [rule.id, rule]));
+      const explanations = new Set(coreRules.map((rule) => normalizeLoose(rule.explication)));
+      state.errors.forEach((task) => {
+        const id = `error-${task.id}`;
+        const explanation = normalizeLoose(task.regle);
+        if (!byKey.has(id) && !explanations.has(explanation)) {
+          byKey.set(id, { id, titre: task.categorie || "Règle à retenir", explication: task.regle, erreur: task.erreur, correction: task.correction });
+          explanations.add(explanation);
+        }
+      });
+      return [...byKey.values()];
+    }
+    function renderRules(filter = $("#rulesSearch")?.value || "") {
+      const query = normalizeLoose(filter);
+      const rules = buildRules().filter((rule) => !query || normalizeLoose(`${rule.titre} ${rule.explication} ${rule.erreur} ${rule.correction}`).includes(query));
+      $("#rulesGrid").innerHTML = rules.map((rule) => `<article class="rule-card">
+        <h3>${escapeHtml(rule.titre)}</h3>
+        <p class="rule-copy">${escapeHtml(rule.explication)}</p>
+        <div class="rule-example bad"><strong>❌ À éviter :</strong> ${escapeHtml(rule.erreur)}</div>
+        <div class="rule-example good"><strong>✅ À dire :</strong> ${escapeHtml(rule.correction)}</div>
+      </article>`).join("") || `<div class="empty">Aucune règle ne correspond à « ${escapeHtml(filter)} ».</div>`;
+    }
+    function renderAll() { updateStats(); renderTask(); renderMiniList(); renderNotebook(); renderTypingErrors(); renderVerbs(); renderRules(); }
     function showView(name) {
       $$(".nav-button").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
       $("#trainingView").classList.toggle("active", name === "training");
       $("#notebookView").classList.toggle("active", name === "notebook");
       $("#typingView").classList.toggle("active", name === "typing");
       $("#verbsView").classList.toggle("active", name === "verbs");
-      $("#viewEyebrow").textContent = name === "training" ? "Session du jour · progression douce" : name === "typing" ? "Suivi précis · mécanique de l'écrit" : name === "verbs" ? "Révision guidée · conjugaison française" : "Mémoire longue · tout garder sous les yeux";
-      $("#viewTitle").textContent = name === "training" ? "Trouver la bonne phrase, sans stress." : name === "typing" ? "Corriger ses petites fautes de frappe." : name === "verbs" ? "Conjuguer pour parler plus naturellement." : "Ton cahier de français vivant.";
-      $("#viewDescription").textContent = name === "training" ? "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt." : name === "typing" ? "Un accent ou une lettre inversée est une information utile : on la garde pour mieux la revoir." : name === "verbs" ? "Les formes, le sens anglais et la prononciation restent réunis sur chaque carte." : "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment.";
+      $("#rulesView").classList.toggle("active", name === "rules");
+      $("#syncView").classList.toggle("active", name === "sync");
+      $("#viewEyebrow").textContent = name === "training" ? "Session du jour · progression douce" : name === "typing" ? "Suivi précis · mécanique de l'écrit" : name === "verbs" ? "Révision guidée · conjugaison française" : name === "rules" ? "Mémoire grammaticale · règles essentielles" : name === "sync" ? "PC ↔ téléphone · sans serveur" : "Mémoire longue · tout garder sous les yeux";
+      $("#viewTitle").textContent = name === "training" ? "Trouver la bonne phrase, sans stress." : name === "typing" ? "Corriger ses petites fautes de frappe." : name === "verbs" ? "Conjuguer pour parler plus naturellement." : name === "rules" ? "Les règles qui changent tout." : name === "sync" ? "Garder tes progrès partout." : "Ton cahier de français vivant.";
+      $("#viewDescription").textContent = name === "training" ? "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt." : name === "typing" ? "Un accent ou une lettre inversée est une information utile : on la garde pour mieux la revoir." : name === "verbs" ? "Les formes, le sens anglais et la prononciation restent réunis sur chaque carte." : name === "rules" ? "Recherche une règle par mot-clé et retrouve ses exemples." : name === "sync" ? "Un fichier ou un code compact suffit pour transférer ta progression." : "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment.";
       if (name === "notebook") renderNotebook();
       if (name === "typing") renderTypingErrors();
       if (name === "verbs") renderVerbs();
+      if (name === "rules") renderRules();
     }
     function currentResponse(task) {
       if (activeMode === "puzzle") return (state.puzzleChoices[task.id] || []).join(" ");
@@ -1072,7 +1164,8 @@
           const byKey = new Map(learnedVerbs.map((verb) => [normalizeVerb(verb).infinitif.toLocaleLowerCase("fr-FR"), verb]));
           imported.forEach((verb) => byKey.set(verb.infinitif.toLocaleLowerCase("fr-FR"), verb));
           learnedVerbs = [...byKey.values()];
-          localStorage.setItem(VERBS_STORAGE_KEY, JSON.stringify(learnedVerbs));
+          safeStorageSet(VERBS_STORAGE_KEY, JSON.stringify(learnedVerbs));
+          safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs));
           renderVerbs();
           showToast(`${imported.length} verbe${imported.length > 1 ? "s" : ""} importé${imported.length > 1 ? "s" : ""} avec succès !`);
           showView("verbs");
@@ -1129,6 +1222,51 @@
       reader.onerror = () => showToast("Import impossible : le fichier n'a pas pu être lu.");
       reader.readAsText(file, "UTF-8");
     }
+    function getBackupPayload() {
+      return { exportedAt: new Date().toISOString(), version: 3, quizProgress: state, verbs: learnedVerbs, typingErrors: state.typingErrors || [], rules: buildRules() };
+    }
+    function mergeBackup(payload) {
+      if (!payload || typeof payload !== "object") throw new Error("Sauvegarde invalide.");
+      if (payload.quizProgress && typeof payload.quizProgress === "object") {
+        const incoming = payload.quizProgress;
+        const currentErrors = [...state.errors];
+        state = { ...state, ...incoming, errors: currentErrors };
+        const ids = new Set(state.errors.map((item) => item.id));
+        (incoming.errors || []).forEach((item) => { if (!ids.has(item.id)) { state.errors.push(item); ids.add(item.id); } });
+        state.typingErrors = [...(state.typingErrors || []), ...(payload.typingErrors || incoming.typingErrors || [])].slice(-200);
+        state.mastered = [...new Set([...(state.mastered || []), ...(incoming.mastered || [])])];
+        ["answers", "examples", "taskProgress", "selectedMode", "puzzleChoices"].forEach((key) => {
+          state[key] = { ...(incoming[key] || {}), ...(state[key] || {}) };
+        });
+        state.attempts = Math.max(state.attempts || 0, incoming.attempts || 0);
+        state.successes = Math.max(state.successes || 0, incoming.successes || 0);
+      }
+      if (Array.isArray(payload.verbs)) {
+        const byKey = new Map(learnedVerbs.map((verb) => [normalizeVerb(verb).infinitif.toLocaleLowerCase("fr-FR"), verb]));
+        payload.verbs.map(normalizeVerb).filter((verb) => verb.infinitif).forEach((verb) => byKey.set(verb.infinitif.toLocaleLowerCase("fr-FR"), verb));
+        learnedVerbs = [...byKey.values()];
+      }
+      persist();
+      safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs));
+      renderAll();
+    }
+    function exportSyncBackup() { download("sauvegarde_francais.json", JSON.stringify(getBackupPayload(), null, 2), "application/json;charset=utf-8"); showToast("Progression exportée."); }
+    function encodeSyncCode() {
+      const bytes = new TextEncoder().encode(JSON.stringify(getBackupPayload()));
+      let binary = ""; bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+      return btoa(binary);
+    }
+    function decodeSyncCode(code) {
+      const binary = atob(code.trim()); const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+    function importSyncFile(event) {
+      const file = event.target.files?.[0]; event.target.value = ""; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { try { mergeBackup(JSON.parse(String(reader.result || ""))); showToast("Progression importée et fusionnée."); } catch (error) { showToast(`Import impossible : ${error.message}`); } };
+      reader.onerror = () => showToast("Import impossible : le fichier n'a pas pu être lu.");
+      reader.readAsText(file, "UTF-8");
+    }
 
     $$(".nav-button").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
     $$(".mode-button").forEach((button) => button.addEventListener("click", () => {
@@ -1158,6 +1296,18 @@
     $("#exportDataButtonNotebook").addEventListener("click", exportAllData);
     $("#importVerbsButton").addEventListener("click", () => $("#importVerbsInput").click());
     $("#importVerbsInput").addEventListener("change", importVerbsFromFile);
+    $("#rulesSearch").addEventListener("input", (event) => renderRules(event.target.value));
+    $("#syncExportButton").addEventListener("click", exportSyncBackup);
+    $("#syncImportButton").addEventListener("click", () => $("#syncImportInput").click());
+    $("#syncImportInput").addEventListener("change", importSyncFile);
+    $("#copySyncButton").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(encodeSyncCode()); showToast("Code de synchronisation copié."); }
+      catch (error) { $("#syncCodeInput").value = encodeSyncCode(); showToast("Copie automatique indisponible : le code est affiché dans le champ."); }
+    });
+    $("#applySyncButton").addEventListener("click", () => {
+      try { mergeBackup(decodeSyncCode($("#syncCodeInput").value)); $("#syncCodeInput").value = ""; showToast("Code validé et progression fusionnée."); }
+      catch (error) { showToast(`Code invalide : ${error.message}`); }
+    });
     $("#resetProgress").addEventListener("click", () => {
       if (!confirm("Réinitialiser toutes les réponses, exemples et validations locales ?")) return;
       state = structuredClone(defaultState); persist(); renderAll(); showToast("Progression réinitialisée.");
