@@ -201,6 +201,19 @@
     .sync-panel { display: grid; gap: 14px; max-width: 760px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.58); }
     .sync-actions { display: flex; flex-wrap: wrap; gap: 9px; }
     .sync-code { min-height: 110px; font-family: "Space Mono", monospace; font-size: 12px; }
+    .lesson-grid, .dashboard-grid, .conversation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .lesson-card, .dashboard-card, .conversation-card { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.62); box-shadow: 0 16px 42px rgba(16,20,21,.07); }
+    .level-badge { display: inline-flex; padding: 6px 9px; border-radius: 999px; background: var(--sage); color: #28352e; font-family: "Space Mono", monospace; font-size: 10px; font-weight: 700; }
+    .lesson-card h3, .dashboard-card h3, .conversation-card h3 { margin: 10px 0 7px; font-family: "Fraunces", serif; font-size: 21px; }
+    .lesson-card p, .dashboard-card p, .conversation-card p { color: #56635d; font-size: 13px; line-height: 1.55; }
+    .metric-list { display: grid; gap: 9px; margin-top: 15px; }
+    .metric-row { display: flex; justify-content: space-between; gap: 12px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 13px; }
+    .conversation-input { min-height: 180px; }
+    .conversation-result { display: grid; gap: 10px; margin-top: 16px; }
+    .conversation-match { padding: 12px; border-radius: 10px; background: #fffdf8; border: 1px solid var(--line); font-size: 13px; }
+    .table-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .table-action { min-height: 36px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; font-size: 11px; font-weight: 700; }
+    .due-badge { color: #9b4c31; font-weight: 700; }
     .field { margin-top: 17px; }
     textarea, input[type="text"] { width: 100%; border: 1px solid #bdc7c1; border-radius: 10px; background: #fffefa; color: var(--ink); padding: 13px 14px; transition: border-color .2s, box-shadow .2s; }
     textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
@@ -287,10 +300,13 @@
       </div>
       <nav class="nav" aria-label="Navigation principale">
         <button class="nav-button active" data-view="training"><span class="nav-icon">✍</span><span>Entraînement</span></button>
+        <button class="nav-button" data-view="dashboard"><span class="nav-icon">◉</span><span>Tableau de bord</span></button>
+        <button class="nav-button" data-view="lessons"><span class="nav-icon">▦</span><span>Parcours A1–B1</span></button>
         <button class="nav-button" data-view="notebook"><span class="nav-icon">▤</span><span>Mon Cahier</span></button>
         <button class="nav-button" data-view="typing"><span class="nav-icon">⌁</span><span>Fautes de frappe</span></button>
         <button class="nav-button" data-view="verbs"><span class="nav-icon">📘</span><span>Verbes &amp; Conjugaison</span></button>
         <button class="nav-button" data-view="rules"><span class="nav-icon">📜</span><span>Mes Règles d'Or</span></button>
+        <button class="nav-button" data-view="conversation"><span class="nav-icon">💬</span><span>Conversation libre</span></button>
         <button class="nav-button" data-view="sync"><span class="nav-icon">🔄</span><span>Sauvegarde &amp; Synchronisation</span></button>
       </nav>
       <div class="sidebar-note">
@@ -343,6 +359,7 @@
                   <div class="mode-help" id="modeHelp">Commence avec les mots : clique simplement dans le bon ordre.</div>
                 </div>
                 <div class="mode-buttons" role="group" aria-label="Modes d'entraînement">
+                  <button class="soft-button" id="testModeToggle" type="button">Mode apprentissage</button>
                   <button class="mode-button active" data-mode="puzzle" type="button"><span>1</span>Puzzle</button>
                   <button class="mode-button" data-mode="cloze" type="button"><span>2</span>Mots manquants</button>
                   <button class="mode-button" data-mode="advanced" type="button"><span>3</span>Dictée / écriture</button>
@@ -389,6 +406,25 @@
         </div>
       </section>
 
+      <section class="view" id="dashboardView">
+        <div class="eyebrow">Vue réelle · aucune donnée inventée</div>
+        <h2 class="font-display text-3xl tracking-tight mb-2">Tableau de bord</h2>
+        <p class="text-sm text-[#66716f] mb-5">Les compteurs ci-dessous proviennent uniquement de tes réponses et de tes révisions enregistrées : aucune donnée de démonstration n’est ajoutée.</p>
+        <div class="dashboard-grid">
+          <article class="dashboard-card"><div class="eyebrow">À faire maintenant</div><h3 id="dashboardDue">0 révision due</h3><p>Cartes dont la prochaine date de révision est arrivée.</p></article>
+          <article class="dashboard-card"><div class="eyebrow">Règles</div><h3 id="dashboardRules">0 règle maîtrisée</h3><p>Une règle est considérée maîtrisée quand ses phrases liées sont au niveau maître.</p></article>
+          <article class="dashboard-card"><div class="eyebrow">Résultats récents</div><h3 id="dashboardRecent">Aucun résultat</h3><p>Dernière tentative enregistrée dans cette session.</p></article>
+        </div>
+        <div class="dashboard-card" style="margin-top:16px;"><div class="eyebrow">Révisions à venir</div><div class="metric-list" id="dashboardReviewList"></div></div>
+      </section>
+
+      <section class="view" id="lessonsView">
+        <div class="eyebrow">Progression guidée</div>
+        <h2 class="font-display text-3xl tracking-tight mb-2">Parcours de grammaire A1 → B1</h2>
+        <p class="text-sm text-[#66716f] mb-5">Commence par les bases, puis reviens librement aux leçons déjà étudiées.</p>
+        <div class="lesson-grid" id="lessonsGrid"></div>
+      </section>
+
       <section class="view" id="notebookView">
         <div class="stats-strip">
           <div class="stat"><div class="stat-label">Erreurs dans le cahier</div><div class="stat-value" id="notebookCount">17</div></div>
@@ -410,7 +446,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Catégorie</th><th>Erreur de départ</th><th>Correction attendue</th><th>Mon exemple</th><th>État</th></tr></thead>
+            <thead><tr><th>#</th><th>Catégorie</th><th>Erreur de départ</th><th>Correction attendue</th><th>Mon exemple</th><th>État / révision</th><th>Actions</th></tr></thead>
             <tbody id="notebookBody"></tbody>
           </table>
         </div>
@@ -484,6 +520,24 @@
           <button class="button button-primary" id="applySyncButton">Valider le code</button>
         </div>
       </section>
+
+      <section class="view" id="conversationView">
+        <div class="eyebrow">Expression libre · correction sur demande</div>
+        <h2 class="font-display text-3xl tracking-tight mb-2">Conversation libre</h2>
+        <p class="text-sm text-[#66716f] mb-5">Écris librement. Rien n’est corrigé automatiquement : lance l’analyse seulement quand tu le souhaites.</p>
+        <div class="conversation-grid">
+          <article class="conversation-card">
+            <label class="label" for="conversationInput">Ton message</label>
+            <textarea class="conversation-input" id="conversationInput" placeholder="Écris quelques phrases en français…" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea>
+            <button class="button button-primary" id="analyzeConversationButton" style="margin-top:12px;">Analyser mes erreurs</button>
+          </article>
+          <article class="conversation-card">
+            <div class="eyebrow">Analyse demandée</div>
+            <h3>Erreurs repérées</h3>
+            <div class="conversation-result" id="conversationResult"><p>Aucune analyse lancée.</p></div>
+          </article>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -543,6 +597,13 @@
     const VERBS_DATA_KEY = "francais_verbes_data";
     const TYPING_ERRORS_KEY = "francais_typing_errors";
     const RULES_KEY = "francais_regles_grammaire";
+    const LESSONS = [
+      { id: "a1-articles", level: "A1", title: "Les articles et le genre", rule: "Un nom français a un genre : mémorise le, la et les avec le mot.", examples: ["une journée", "la bibliothèque"], errorIds: [1, 3, 4, 13] },
+      { id: "a1-present", level: "A1", title: "Être et avoir au présent", rule: "Utilise être pour décrire et avoir pour posséder ou exprimer un âge.", examples: ["Je suis prêt.", "J'ai un cours."], errorIds: [14, 25] },
+      { id: "a2-passe", level: "A2", title: "Le passé composé", rule: "Avec avoir, le participe passé des verbes réguliers en -er finit en -é.", examples: ["J'ai joué.", "J'ai passé une bonne journée."], errorIds: [1, 2, 4, 6] },
+      { id: "a2-prepositions", level: "A2", title: "Prépositions et élisions", rule: "Devant une voyelle, de devient d' et je devient j'.", examples: ["d'hier", "j'écris"], errorIds: [15, 17, 18, 20] },
+      { id: "b1-connecteurs", level: "B1", title: "Connecteurs et nuances", rule: "Relie les idées avec des expressions naturelles comme c'est pour ça que.", examples: ["C'est pour ça que j'ai dit non.", "Je suis prêt à commencer."], errorIds: [7, 9, 27] }
+    ];
     const PRONOUNS = ["Je", "Tu", "Il / Elle / On", "Nous", "Vous", "Ils / Elles"];
     const TENSE_ORDER = ["Présent", "Passé Composé", "Futur Proche"];
     const defaultVerbs = [
@@ -586,7 +647,7 @@
     const defaultState = {
       errors: initialErrors, answers: {}, examples: {}, mastered: [], attempts: 0, successes: 0, currentId: 1,
       taskProgress: {}, selectedMode: {}, puzzleChoices: {}, typingErrors: [],
-      exerciseQueue: [], queueIndex: 0, startedAt: new Date().toISOString()
+      exerciseQueue: [], queueIndex: 0, startedAt: new Date().toISOString(), lastResult: null, conversationDraft: "", testMode: false, testSession: { answered: 0, correct: 0 }
     };
     let state = loadState();
     let learnedVerbs = loadVerbs();
@@ -692,15 +753,26 @@
     }
     function buildExerciseQueue() {
       const queue = [];
-      state.errors.forEach((task, index) => {
+      const due = state.errors.filter(isReviewDue).sort((a, b) => new Date(a.nextReviewAt || 0) - new Date(b.nextReviewAt || 0));
+      due.forEach((task) => queue.push({ taskId: task.id, mode: stageMode(taskProgress(task).stage), kind: "spaced-review" }));
+      state.errors.filter((task) => !due.some((item) => item.id === task.id)).forEach((task, index) => {
         queue.push({ taskId: task.id, mode: "puzzle", kind: "new" });
         if (index >= 2) {
-          const reviewTask = state.errors[index - 2];
+          const reviewTask = state.errors.filter((candidate) => !due.some((item) => item.id === candidate.id))[index - 2];
           queue.push({ taskId: reviewTask.id, mode: taskProgress(reviewTask).stage >= 3 ? "advanced" : "cloze", kind: "review" });
         }
       });
-      state.errors.slice(-2).forEach((task) => queue.push({ taskId: task.id, mode: taskProgress(task).stage >= 3 ? "advanced" : "cloze", kind: "review" }));
+      state.errors.filter((task) => !due.some((item) => item.id === task.id)).slice(-2).forEach((task) => queue.push({ taskId: task.id, mode: taskProgress(task).stage >= 3 ? "advanced" : "cloze", kind: "review" }));
       return queue;
+    }
+    function isReviewDue(task) { return Boolean(task.nextReviewAt && new Date(task.nextReviewAt).getTime() <= Date.now()); }
+    function scheduleReview(task, correct) {
+      const progress = taskProgress(task);
+      const intervals = [1, 3, 7];
+      const delayDays = correct ? intervals[Math.min(progress.successes, intervals.length - 1)] : 1;
+      task.lastReviewedAt = new Date().toISOString();
+      task.nextReviewAt = new Date(Date.now() + delayDays * 86400000).toISOString();
+      task.lastResult = correct ? "correct" : "incorrect";
     }
     function ensureExerciseQueue() {
       const knownIds = new Set(state.errors.map((task) => task.id));
@@ -757,6 +829,7 @@
       $("#xpStageLabel").textContent = labels[stage][0];
       $("#xpStageCopy").textContent = labels[stage][1];
       [1, 2, 3].forEach((number) => $(`#star${number === 1 ? "One" : number === 2 ? "Two" : "Three"}`).classList.toggle("active", stage === number));
+      renderDashboard();
     }
     function renderMiniList() {
       const items = state.errors.slice(0, 5).map((item) => {
@@ -843,6 +916,8 @@
       $("#hintButton").textContent = "💡 Voir l'indice · la règle";
       $$(".mode-button").forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
       $("#modeHelp").textContent = mode === "puzzle" ? "Commence avec les mots : clique simplement dans le bon ordre." : mode === "cloze" ? "La phrase est presque complète : écris les 1 ou 2 mots clés." : "Tu es prêt : écris ou dicte toute la phrase.";
+      $("#testModeToggle").textContent = state.testMode ? `Mode test · ${state.testSession.answered}/5` : "Mode apprentissage";
+      $("#testModeToggle").classList.toggle("button-accent", state.testMode);
       $("#exerciseArea").innerHTML = mode === "puzzle" ? renderPuzzle(task) : mode === "cloze" ? renderCloze(task) : renderAdvanced(task);
       $("#exerciseArea").insertAdjacentHTML("beforeend", renderExampleField());
       $("#feedback").className = "hidden"; $("#feedback").innerHTML = "";
@@ -857,8 +932,42 @@
       const body = $("#notebookBody");
       body.innerHTML = state.errors.map((item) => {
         const progress = taskProgress(item), mastered = progress.stage >= 3;
-        return `<tr><td class="table-id">${String(item.id).padStart(2, "0")}</td><td><span class="category-pill">${escapeHtml(item.categorie)}</span></td><td>${escapeHtml(item.erreur)}</td><td class="table-correction">${escapeHtml(item.correction)}</td><td>${escapeHtml(state.examples[item.id] || "—")}</td><td>${mastered ? '<span class="status-dot">Maître ★★★</span>' : `<span class="text-[#66716f]">${"★".repeat(progress.stage)} · ${progress.successes}/2</span>`}</td></tr>`;
-      }).join("") || `<tr><td colspan="6"><div class="empty">Ton cahier est vide pour le moment.</div></td></tr>`;
+        const due = isReviewDue(item) ? `<span class="due-badge">À revoir</span>` : item.nextReviewAt ? `le ${new Date(item.nextReviewAt).toLocaleDateString("fr-FR")}` : "non planifiée";
+        return `<tr><td class="table-id">${String(item.id).padStart(2, "0")}</td><td><span class="category-pill">${escapeHtml(item.categorie)}</span></td><td>${escapeHtml(item.erreur)}</td><td class="table-correction">${escapeHtml(item.correction)}</td><td>${escapeHtml(state.examples[item.id] || "—")}</td><td>${mastered ? '<span class="status-dot">Maître ★★★</span>' : `<span class="text-[#66716f]">${"★".repeat(progress.stage)} · ${progress.successes}/2`}</span><br><small>${due}</small></td><td><div class="table-actions"><button class="table-action" data-edit-error="${item.id}" type="button">Modifier</button><button class="table-action" data-delete-error="${item.id}" type="button">Supprimer</button></div></td></tr>`;
+      }).join("") || `<tr><td colspan="7"><div class="empty">Ton cahier est vide pour le moment.</div></td></tr>`;
+    }
+    function renderDashboard() {
+      const due = state.errors.filter(isReviewDue);
+      const masteredRules = LESSONS.filter((lesson) => lesson.errorIds.every((id) => taskProgress(state.errors.find((item) => item.id === id) || {}).stage >= 3)).length;
+      $("#dashboardDue").textContent = `${due.length} révision${due.length === 1 ? "" : "s"} due${due.length === 1 ? "" : "s"}`;
+      $("#dashboardRules").textContent = `${masteredRules} règle${masteredRules === 1 ? "" : "s"} maîtrisée${masteredRules === 1 ? "" : "s"}`;
+      $("#dashboardRecent").textContent = state.lastResult ? `${state.lastResult.correct ? "Réussite" : "À revoir"} · ${new Date(state.lastResult.date).toLocaleDateString("fr-FR")}` : "Aucun résultat";
+      $("#dashboardReviewList").innerHTML = due.slice(0, 8).map((task) => `<div class="metric-row"><span>${escapeHtml(task.correction)}</span><span class="due-badge">Aujourd'hui</span></div>`).join("") || `<p>Aucune révision due. Ton planning est à jour.</p>`;
+    }
+    function renderLessons() {
+      $("#lessonsGrid").innerHTML = LESSONS.map((lesson) => {
+        const studied = lesson.errorIds.filter((id) => state.taskProgress[id]).length;
+        const complete = lesson.errorIds.length > 0 && lesson.errorIds.every((id) => taskProgress(state.errors.find((item) => item.id === id) || {}).stage >= 3);
+        return `<article class="lesson-card"><span class="level-badge">${lesson.level}</span><h3>${escapeHtml(lesson.title)}</h3><p>${escapeHtml(lesson.rule)}</p><p><strong>Exemples :</strong> ${lesson.examples.map(escapeHtml).join(" · ")}</p><div class="metric-row"><span>${studied}/${lesson.errorIds.length} étudiées</span><span>${complete ? "Maîtrisée ✅" : "En cours"}</span></div><button class="button button-small button-primary" data-lesson-id="${lesson.id}" type="button" style="margin-top:13px;">Réviser cette leçon</button></article>`;
+      }).join("");
+      $$("[data-lesson-id]").forEach((button) => button.addEventListener("click", () => {
+        const lesson = LESSONS.find((item) => item.id === button.dataset.lessonId);
+        state.currentId = lesson.errorIds[0];
+        state.queueIndex = state.exerciseQueue.findIndex((item) => item.taskId === state.currentId);
+        if (state.queueIndex < 0) state.queueIndex = 0;
+        persist(); showView("training"); renderTask();
+      }));
+    }
+    function analyzeConversation() {
+      const text = $("#conversationInput").value.trim();
+      state.conversationDraft = text; persist();
+      const normalizedText = normalizeLoose(text);
+      const matches = state.errors.filter((task) => {
+        const variants = [task.erreur, task.correction, ...String(task.erreur).split("/")].map(normalizeLoose).filter((value) => value.length >= 4);
+        return variants.some((variant) => normalizedText.includes(variant));
+      });
+      $("#conversationResult").innerHTML = matches.length ? matches.map((task) => `<div class="conversation-match"><strong>${escapeHtml(task.erreur)}</strong><br><span class="table-correction">${escapeHtml(task.correction)}</span><br><small>${escapeHtml(task.regle)}</small><br><button class="button button-small" data-conversation-task="${task.id}" type="button" style="margin-top:8px;">Transformer en exercice</button></div>`).join("") : `<p>Aucune correspondance exacte trouvée. Tu peux ajouter cette phrase au cahier avec « Nouvelle erreur ».</p>`;
+      $$("[data-conversation-task]").forEach((button) => button.addEventListener("click", () => { state.currentId = Number(button.dataset.conversationTask); persist(); showView("training"); renderTask(); }));
     }
     function renderTypingErrors() {
       const body = $("#typingBody");
@@ -959,22 +1068,36 @@
         <div class="rule-example good"><strong>✅ À dire :</strong> ${escapeHtml(rule.correction)}</div>
       </article>`).join("") || `<div class="empty">Aucune règle ne correspond à « ${escapeHtml(filter)} ».</div>`;
     }
-    function renderAll() { updateStats(); renderTask(); renderMiniList(); renderNotebook(); renderTypingErrors(); renderVerbs(); renderRules(); }
+    function renderAll() { updateStats(); renderTask(); renderMiniList(); renderNotebook(); renderTypingErrors(); renderVerbs(); renderRules(); renderLessons(); }
     function showView(name) {
       $$(".nav-button").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
       $("#trainingView").classList.toggle("active", name === "training");
+      $("#dashboardView").classList.toggle("active", name === "dashboard");
+      $("#lessonsView").classList.toggle("active", name === "lessons");
       $("#notebookView").classList.toggle("active", name === "notebook");
       $("#typingView").classList.toggle("active", name === "typing");
       $("#verbsView").classList.toggle("active", name === "verbs");
       $("#rulesView").classList.toggle("active", name === "rules");
+      $("#conversationView").classList.toggle("active", name === "conversation");
       $("#syncView").classList.toggle("active", name === "sync");
-      $("#viewEyebrow").textContent = name === "training" ? "Session du jour · progression douce" : name === "typing" ? "Suivi précis · mécanique de l'écrit" : name === "verbs" ? "Révision guidée · conjugaison française" : name === "rules" ? "Mémoire grammaticale · règles essentielles" : name === "sync" ? "PC ↔ téléphone · sans serveur" : "Mémoire longue · tout garder sous les yeux";
-      $("#viewTitle").textContent = name === "training" ? "Trouver la bonne phrase, sans stress." : name === "typing" ? "Corriger ses petites fautes de frappe." : name === "verbs" ? "Conjuguer pour parler plus naturellement." : name === "rules" ? "Les règles qui changent tout." : name === "sync" ? "Garder tes progrès partout." : "Ton cahier de français vivant.";
-      $("#viewDescription").textContent = name === "training" ? "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt." : name === "typing" ? "Un accent ou une lettre inversée est une information utile : on la garde pour mieux la revoir." : name === "verbs" ? "Les formes, le sens anglais et la prononciation restent réunis sur chaque carte." : name === "rules" ? "Recherche une règle par mot-clé et retrouve ses exemples." : name === "sync" ? "Un fichier ou un code compact suffit pour transférer ta progression." : "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment.";
+      const copy = {
+        training: ["Session du jour · progression douce", "Trouver la bonne phrase, sans stress.", "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt."],
+        dashboard: ["Vue réelle · suivi personnel", "Voir ce qui mérite ton attention.", "Les compteurs proviennent uniquement de tes réponses et de tes révisions."],
+        lessons: ["Progression guidée · A1 à B1", "Apprendre dans le bon ordre.", "Commence par les bases, puis reviens librement aux leçons déjà étudiées."],
+        typing: ["Suivi précis · mécanique de l'écrit", "Corriger ses petites fautes de frappe.", "Un accent ou une lettre inversée est une information utile : on la garde pour mieux la revoir."],
+        verbs: ["Révision guidée · conjugaison française", "Conjuguer pour parler plus naturellement.", "Les formes, le sens anglais et la prononciation restent réunis sur chaque carte."],
+        rules: ["Mémoire grammaticale · règles essentielles", "Les règles qui changent tout.", "Recherche une règle par mot-clé et retrouve ses exemples."],
+        conversation: ["Expression libre · correction sur demande", "Écrire avant de corriger.", "L’analyse ne se lance que lorsque tu le demandes."],
+        sync: ["PC ↔ téléphone · sans serveur", "Garder tes progrès partout.", "Un fichier ou un code compact suffit pour transférer ta progression."],
+        notebook: ["Mémoire longue · tout garder sous les yeux", "Ton cahier de français vivant.", "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment."]
+      }[name] || [];
+      $("#viewEyebrow").textContent = copy[0]; $("#viewTitle").textContent = copy[1]; $("#viewDescription").textContent = copy[2];
       if (name === "notebook") renderNotebook();
       if (name === "typing") renderTypingErrors();
       if (name === "verbs") renderVerbs();
       if (name === "rules") renderRules();
+      if (name === "dashboard") renderDashboard();
+      if (name === "lessons") renderLessons();
     }
     function currentResponse(task) {
       if (activeMode === "puzzle") return (state.puzzleChoices[task.id] || []).join(" ");
@@ -1028,6 +1151,25 @@
       const isAdvanced = activeMode === "advanced";
       const correct = isAdvanced ? normalizeLoose(answer) === normalizeLoose(task.correction) : normalizeStrict(answer) === normalizeStrict(task.correction);
       recordTypingErrors(task, answer);
+      scheduleReview(task, correct);
+      state.lastResult = { taskId: task.id, correct, date: new Date().toISOString() };
+      if (state.testMode) {
+        state.testSession.answered += 1;
+        if (correct) state.testSession.correct += 1;
+        persist();
+        feedback.className = "feedback success explanation";
+        feedback.innerHTML = `<span class="feedback-title">Réponse enregistrée 🧪</span><div>Le corrigé reste masqué pendant le test.</div><div style="margin-top:10px;">Question ${state.testSession.answered}/5</div>`;
+        if (state.testSession.answered >= 5) {
+          feedback.innerHTML = `<span class="feedback-title">Test terminé ✅</span><div>Résultat : ${state.testSession.correct}/5.</div><div style="margin-top:10px;">Tu peux repasser en mode apprentissage pour voir les explications détaillées.</div>`;
+          state.testMode = false;
+          state.testSession = { answered: 0, correct: 0 };
+          persist();
+        }
+        $("#checkButton").disabled = true;
+        $("#nextButton").classList.remove("hidden");
+        renderDashboard();
+        return;
+      }
       if (correct) {
         const progress = taskProgress(task);
         progress.successes += 1;
@@ -1106,14 +1248,18 @@
       $("#exampleInput")?.addEventListener("input", () => { state.examples[currentTask().id] = $("#exampleInput").value; persist(); updateStats(); });
     }
     function openModal() { $("#modalBackdrop").classList.remove("hidden"); $("#newCategory").focus(); }
-    function closeModal() { $("#modalBackdrop").classList.add("hidden"); ["newCategory", "newError", "newCorrection", "newRule"].forEach((id) => { $(`#${id}`).value = ""; }); }
+    function closeModal() { $("#modalBackdrop").classList.add("hidden"); window.editingErrorId = null; ["newCategory", "newError", "newCorrection", "newRule"].forEach((id) => { $(`#${id}`).value = ""; }); }
     function saveNewError() {
       const categorie = $("#newCategory").value.trim(), erreur = $("#newError").value.trim(), correction = $("#newCorrection").value.trim(), regle = $("#newRule").value.trim();
       if (!categorie || !erreur || !correction || !regle) { showToast("Complète les quatre champs pour ajouter l'erreur."); return; }
-      const id = Math.max(0, ...state.errors.map((item) => item.id)) + 1;
-      state.errors.push({ id, categorie, erreur, correction, regle });
+      const id = window.editingErrorId || Math.max(0, ...state.errors.map((item) => item.id)) + 1;
+      const updated = { id, categorie, erreur, correction, regle };
+      const existingIndex = state.errors.findIndex((item) => item.id === id);
+      if (existingIndex >= 0) state.errors[existingIndex] = { ...state.errors[existingIndex], ...updated };
+      else state.errors.push(updated);
       state.currentId = id;
-      persist(); renderAll(); closeModal(); showToast("Nouvelle erreur ajoutée au cahier."); showView("training");
+      state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0;
+      persist(); renderAll(); closeModal(); showToast(existingIndex >= 0 ? "Carte mise à jour." : "Nouvelle erreur ajoutée au cahier."); showView("training");
     }
     function download(filename, content, type) {
       const blob = new Blob([content], { type });
@@ -1278,6 +1424,13 @@
       persist();
       renderTask();
     }));
+    $("#testModeToggle").addEventListener("click", () => {
+      state.testMode = !state.testMode;
+      state.testSession = { answered: 0, correct: 0 };
+      persist();
+      renderTask();
+      showToast(state.testMode ? "Mode test activé : le corrigé apparaîtra à la fin." : "Mode apprentissage activé.");
+    });
     $("#hintButton").addEventListener("click", () => { const box = $("#hintBox"); const hidden = box.classList.toggle("hidden"); $("#hintButton").textContent = hidden ? "💡 Voir l'indice · la règle" : "↟ Masquer l'indice"; });
     $("#listenButton").addEventListener("click", speakSentence);
     $("#checkButton").addEventListener("click", checkAnswer);
@@ -1287,6 +1440,24 @@
     $("#cancelModal").addEventListener("click", closeModal);
     $("#modalBackdrop").addEventListener("click", (event) => { if (event.target === $("#modalBackdrop")) closeModal(); });
     $("#saveNewError").addEventListener("click", saveNewError);
+    $("#notebookBody").addEventListener("click", (event) => {
+      const editButton = event.target.closest("[data-edit-error]");
+      const deleteButton = event.target.closest("[data-delete-error]");
+      if (editButton) {
+        const task = state.errors.find((item) => item.id === Number(editButton.dataset.editError));
+        if (!task) return;
+        $("#newCategory").value = task.categorie; $("#newError").value = task.erreur; $("#newCorrection").value = task.correction; $("#newRule").value = task.regle;
+        window.editingErrorId = task.id; openModal();
+      }
+      if (deleteButton) {
+        const id = Number(deleteButton.dataset.deleteError);
+        if (!confirm("Supprimer cette carte et sa progression ?")) return;
+        state.errors = state.errors.filter((item) => item.id !== id);
+        delete state.answers[id]; delete state.examples[id]; delete state.taskProgress[id]; delete state.selectedMode[id]; delete state.puzzleChoices[id];
+        state.mastered = state.mastered.filter((item) => item !== id);
+        state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0; persist(); renderAll(); showToast("Carte supprimée.");
+      }
+    });
     $("#exportCsv").addEventListener("click", exportCsv);
     $("#exportJson").addEventListener("click", exportJson);
     $("#importJsonButton").addEventListener("click", () => $("#importJsonInput").click());
@@ -1308,6 +1479,8 @@
       try { mergeBackup(decodeSyncCode($("#syncCodeInput").value)); $("#syncCodeInput").value = ""; showToast("Code validé et progression fusionnée."); }
       catch (error) { showToast(`Code invalide : ${error.message}`); }
     });
+    $("#analyzeConversationButton").addEventListener("click", analyzeConversation);
+    $("#conversationInput").addEventListener("input", () => { state.conversationDraft = $("#conversationInput").value; persist(); });
     $("#resetProgress").addEventListener("click", () => {
       if (!confirm("Réinitialiser toutes les réponses, exemples et validations locales ?")) return;
       state = structuredClone(defaultState); persist(); renderAll(); showToast("Progression réinitialisée.");
