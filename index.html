@@ -214,6 +214,15 @@
     .table-actions { display: flex; flex-wrap: wrap; gap: 6px; }
     .table-action { min-height: 36px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: #fffefa; font-size: 11px; font-weight: 700; }
     .due-badge { color: #9b4c31; font-weight: 700; }
+    .account-bar { display:flex; justify-content:flex-end; align-items:center; gap:9px; margin-bottom:18px; }
+    .account-label { color:var(--muted); font-size:12px; }
+    .auth-modal { width:min(480px, 100%); }
+    .auth-tabs { display:flex; gap:8px; margin:15px 0; }
+    .auth-tab { flex:1; }
+    .auth-message { min-height:20px; margin-top:12px; font-size:13px; line-height:1.45; }
+    .auth-message.error { color:#9b3d2e; }
+    .auth-message.success { color:#28633b; }
+    .account-menu { display:flex; align-items:center; gap:8px; }
     .field { margin-top: 17px; }
     textarea, input[type="text"] { width: 100%; border: 1px solid #bdc7c1; border-radius: 10px; background: #fffefa; color: var(--ink); padding: 13px 14px; transition: border-color .2s, box-shadow .2s; }
     textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
@@ -323,11 +332,13 @@
           <p class="topbar-copy" id="viewDescription">Écris ta version naturelle sans copier-coller. L'important n'est pas d'aller vite, mais de remarquer ce qui change.</p>
         </div>
         <div class="topbar-actions">
+          <div class="account-menu"><span class="account-label" id="authStatus">Mode local</span><button class="button button-small" id="accountButton" type="button">👤 Se connecter</button></div>
           <button class="button button-accent" id="addErrorTop">＋ Nouvelle erreur</button>
           <button class="button" id="importJsonButton">📥 Importer de nouvelles phrases (JSON)</button>
           <input id="importJsonInput" type="file" accept=".json,application/json" hidden />
           <button class="button" id="exportDataButton">📤 Exporter mes données (JSON)</button>
           <button class="button" id="resetProgress">Réinitialiser</button>
+          <button class="button" id="restartQuizButton">↻ Recommencer le quiz</button>
         </div>
       </header>
 
@@ -558,8 +569,32 @@
       <div class="modal-actions"><button class="button" id="cancelModal">Annuler</button><button class="button button-primary" id="saveNewError">Ajouter au cahier</button></div>
     </div>
   </div>
+  <div class="modal-backdrop hidden" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal auth-modal">
+      <div class="modal-head">
+        <div><div class="eyebrow">Compte personnel</div><h2 id="authTitle">Se connecter</h2><p class="text-sm text-[#66716f]" id="authSubtitle">Synchronise ta progression entre appareils.</p></div>
+        <button class="close-button" id="closeAuth" aria-label="Fermer">×</button>
+      </div>
+      <div class="auth-tabs"><button class="button auth-tab button-primary" id="showLoginTab" type="button">Log In</button><button class="button auth-tab" id="showSignupTab" type="button">Sign Up</button></div>
+      <form id="loginForm">
+        <div class="field"><label class="label" for="loginIdentifier">Adresse email</label><input id="loginIdentifier" type="email" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label class="label" for="loginPassword">Mot de passe</label><input id="loginPassword" type="password" autocomplete="current-password" required><button class="soft-button" id="toggleLoginPassword" type="button" style="margin-top:7px;">👁️ Afficher le mot de passe</button></div>
+        <button class="button button-primary" type="submit">Se connecter</button>
+        <button class="soft-button" id="forgotPasswordButton" type="button" style="margin-top:8px;">Mot de passe oublié ?</button>
+      </form>
+      <form id="signupForm" class="hidden">
+        <div class="field"><label class="label" for="signupUsername">Nom d'utilisateur</label><input id="signupUsername" type="text" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false" minlength="3" maxlength="24" required></div>
+        <div class="field"><label class="label" for="signupEmail">Adresse email</label><input id="signupEmail" type="email" autocomplete="email" required></div>
+        <div class="field"><label class="label" for="signupPassword">Mot de passe</label><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="field"><label class="label" for="signupConfirm">Confirmer le mot de passe</label><input id="signupConfirm" type="password" autocomplete="new-password" minlength="8" required></div>
+        <button class="button button-primary" type="submit">Créer mon compte</button>
+      </form>
+      <div class="auth-message" id="authMessage" role="status"></div>
+    </div>
+  </div>
   <div class="toast" id="toast" role="status"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@28.3.0"></script>
   <script>
     const initialErrors = [
       { id: 1, categorie: "Grammaire / Genre", erreur: "Bien journée / Aujourd'hui, je passe un bon jeur", correction: "J'ai passé une bonne journée", regle: "On dit 'une journée' (féminin), donc 'une bonne journée'." },
@@ -597,6 +632,18 @@
     const VERBS_DATA_KEY = "francais_verbes_data";
     const TYPING_ERRORS_KEY = "francais_typing_errors";
     const RULES_KEY = "francais_regles_grammaire";
+    // Appwrite frontend configuration. These values are public; never add an API key here.
+    const APPWRITE_ENDPOINT = "https://nyc.cloud.appwrite.io/v1";
+    const APPWRITE_PROJECT_ID = "6ad92855000e8b719284";
+    const APPWRITE_DATABASE_ID = "6adbdeda002ea2ddff76";
+    const APPWRITE_TABLE_ID = "6adbdeea000454ab2e89";
+    const appwriteReady = Boolean(APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID && APPWRITE_DATABASE_ID && APPWRITE_TABLE_ID && window.Appwrite);
+    const appwriteClient = appwriteReady ? new Appwrite.Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID) : null;
+    const appwriteAccount = appwriteClient ? new Appwrite.Account(appwriteClient) : null;
+    const appwriteTables = appwriteClient ? new Appwrite.TablesDB(appwriteClient) : null;
+    const appwriteId = window.Appwrite?.ID;
+    const appwritePermission = window.Appwrite?.Permission;
+    const appwriteRole = window.Appwrite?.Role;
     const LESSONS = [
       { id: "a1-articles", level: "A1", title: "Les articles et le genre", rule: "Un nom français a un genre : mémorise le, la et les avec le mot.", examples: ["une journée", "la bibliothèque"], errorIds: [1, 3, 4, 13] },
       { id: "a1-present", level: "A1", title: "Être et avoir au présent", rule: "Utilise être pour décrire et avoir pour posséder ou exprimer un âge.", examples: ["Je suis prêt.", "J'ai un cours."], errorIds: [14, 25] },
@@ -648,6 +695,7 @@
       errors: initialErrors, answers: {}, examples: {}, mastered: [], attempts: 0, successes: 0, currentId: 1,
       taskProgress: {}, selectedMode: {}, puzzleChoices: {}, typingErrors: [],
       exerciseQueue: [], queueIndex: 0, startedAt: new Date().toISOString(), lastResult: null, conversationDraft: "", testMode: false, testSession: { answered: 0, correct: 0 }
+      , verifiedByTask: {}, authUserId: null, quizCompleted: false
     };
     let state = loadState();
     let learnedVerbs = loadVerbs();
@@ -750,6 +798,63 @@
       safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs || []));
       safeStorageSet(TYPING_ERRORS_KEY, JSON.stringify(state.typingErrors || []));
       safeStorageSet(RULES_KEY, JSON.stringify(buildRules()));
+      queueRemoteSave();
+    }
+    let remoteSaveTimer = null;
+    let remoteRowExists = false;
+    let remoteSaveChain = Promise.resolve();
+    function queueRemoteSave() {
+      if (!appwriteReady || !state.authUserId) return;
+      clearTimeout(remoteSaveTimer);
+      remoteSaveTimer = setTimeout(() => {
+        const userId = state.authUserId;
+        const payload = getBackupPayload();
+        remoteSaveChain = remoteSaveChain.then(async () => {
+          if (!appwriteTables || state.authUserId !== userId) return;
+          try {
+            if (!remoteRowExists) await loadRemoteProgress(userId);
+            if (state.authUserId !== userId) return;
+            const data = { payload: JSON.stringify(payload) };
+            if (remoteRowExists) {
+              await appwriteTables.updateRow({ databaseId: APPWRITE_DATABASE_ID, tableId: APPWRITE_TABLE_ID, rowId: userId, data });
+            } else {
+              await appwriteTables.createRow({
+                databaseId: APPWRITE_DATABASE_ID, tableId: APPWRITE_TABLE_ID, rowId: userId, data,
+                permissions: [appwritePermission.read(appwriteRole.user(userId)), appwritePermission.update(appwriteRole.user(userId)), appwritePermission.delete(appwriteRole.user(userId))]
+              });
+              remoteRowExists = true;
+            }
+          } catch (error) { console.warn("Synchronisation Appwrite impossible.", error.message || error); }
+        });
+      }, 500);
+    }
+    async function loadRemoteProgress(userId) {
+      if (!appwriteReady || !appwriteTables) return;
+      try {
+        const row = await appwriteTables.getRow({ databaseId: APPWRITE_DATABASE_ID, tableId: APPWRITE_TABLE_ID, rowId: userId });
+        remoteRowExists = true;
+        if (row?.payload) {
+          const payload = typeof row.payload === "string" ? JSON.parse(row.payload) : row.payload;
+          const remote = payload.quizProgress || {};
+          const remoteErrors = Array.isArray(remote.errors) ? remote.errors : [];
+          const remoteIds = new Set(remoteErrors.map((item) => item.id));
+          state = { ...structuredClone(defaultState), ...remote, authUserId: userId, errors: [...remoteErrors, ...initialErrors.filter((item) => !remoteIds.has(item.id))] };
+          state.taskProgress = remote.taskProgress || {}; state.answers = remote.answers || {}; state.examples = remote.examples || {};
+          state.verifiedByTask = remote.verifiedByTask || {}; state.typingErrors = remote.typingErrors || [];
+          if (Array.isArray(payload.verbs)) learnedVerbs = payload.verbs.map(normalizeVerb).filter((verb) => verb.infinitif);
+          state.exerciseQueue = Array.isArray(remote.exerciseQueue) && remote.exerciseQueue.length ? remote.exerciseQueue : buildExerciseQueue();
+          state.queueIndex = Math.min(Number(remote.queueIndex) || 0, Math.max(0, state.exerciseQueue.length - 1));
+          renderAll(); showToast("Progression synchronisée.");
+        }
+      } catch (error) {
+        if (Number(error.code) === 404) {
+          remoteRowExists = false;
+          if (state.authUserId === userId) queueRemoteSave();
+          return;
+        }
+        console.warn("Progression Appwrite indisponible.", error.message || error);
+        showToast("Connecté, mais la progression distante n'a pas pu être chargée. Vérifie les accès de la table Appwrite.");
+      }
     }
     function buildExerciseQueue() {
       const queue = [];
@@ -920,13 +1025,16 @@
       $("#testModeToggle").classList.toggle("button-accent", state.testMode);
       $("#exerciseArea").innerHTML = mode === "puzzle" ? renderPuzzle(task) : mode === "cloze" ? renderCloze(task) : renderAdvanced(task);
       $("#exerciseArea").insertAdjacentHTML("beforeend", renderExampleField());
-      $("#feedback").className = "hidden"; $("#feedback").innerHTML = "";
-      $("#nextButton").classList.add("hidden");
-      $("#checkButton").disabled = false;
+      const savedVerification = state.verifiedByTask?.[task.id];
+      $("#feedback").className = savedVerification ? `feedback ${savedVerification.correct ? "success" : "error"} explanation` : "hidden";
+      $("#feedback").innerHTML = savedVerification?.feedback || "";
+      $("#nextButton").classList.toggle("hidden", !savedVerification);
+      $("#checkButton").disabled = Boolean(savedVerification);
       $("#checkButton").textContent = mode === "puzzle" ? "Vérifier mon ordre →" : mode === "cloze" ? "Vérifier les mots →" : "Vérifier ma phrase →";
       $("#formHint").textContent = mode === "advanced" ? "Validation douce : un accent ou une ponctuation oubliée ne bloque pas ta réussite." : "Tu peux te tromper : l'objectif est de comprendre, pas de tout savoir du premier coup.";
       bindExerciseEvents();
       updateStats();
+      if (savedVerification) $("#feedback").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function renderNotebook() {
       const body = $("#notebookBody");
@@ -1144,6 +1252,7 @@
     }
     function checkAnswer() {
       const task = currentTask(); if (!task) return;
+      if (state.verifiedByTask?.[task.id]) return;
       const answer = currentResponse(task);
       state.examples[task.id] = $("#exampleInput")?.value.trim() || state.examples[task.id] || "";
       state.attempts += 1; persist();
@@ -1165,6 +1274,7 @@
           state.testSession = { answered: 0, correct: 0 };
           persist();
         }
+        state.verifiedByTask[task.id] = { mode: activeMode, answer, correct, feedback: feedback.innerHTML, date: new Date().toISOString() };
         $("#checkButton").disabled = true;
         $("#nextButton").classList.remove("hidden");
         renderDashboard();
@@ -1189,6 +1299,7 @@
         feedback.className = "feedback error explanation";
         feedback.innerHTML = explainFeedback(task, false, answer);
       }
+      state.verifiedByTask[task.id] = { mode: activeMode, answer, correct, feedback: feedback.innerHTML, date: new Date().toISOString() };
       persist();
       $("#checkButton").disabled = true;
       $("#nextButton").classList.remove("hidden");
@@ -1199,6 +1310,7 @@
       ensureExerciseQueue();
       state.queueIndex += 1;
       if (state.queueIndex >= state.exerciseQueue.length) {
+        state.quizCompleted = true;
         state.exerciseQueue = buildExerciseQueue();
         state.queueIndex = 0;
         showToast("Cycle terminé : on recommence avec les phrases à revoir.");
@@ -1371,7 +1483,7 @@
     function getBackupPayload() {
       return { exportedAt: new Date().toISOString(), version: 3, quizProgress: state, verbs: learnedVerbs, typingErrors: state.typingErrors || [], rules: buildRules() };
     }
-    function mergeBackup(payload) {
+    function mergeBackup(payload, save = true) {
       if (!payload || typeof payload !== "object") throw new Error("Sauvegarde invalide.");
       if (payload.quizProgress && typeof payload.quizProgress === "object") {
         const incoming = payload.quizProgress;
@@ -1381,7 +1493,7 @@
         (incoming.errors || []).forEach((item) => { if (!ids.has(item.id)) { state.errors.push(item); ids.add(item.id); } });
         state.typingErrors = [...(state.typingErrors || []), ...(payload.typingErrors || incoming.typingErrors || [])].slice(-200);
         state.mastered = [...new Set([...(state.mastered || []), ...(incoming.mastered || [])])];
-        ["answers", "examples", "taskProgress", "selectedMode", "puzzleChoices"].forEach((key) => {
+        ["answers", "examples", "taskProgress", "selectedMode", "puzzleChoices", "verifiedByTask"].forEach((key) => {
           state[key] = { ...(incoming[key] || {}), ...(state[key] || {}) };
         });
         state.attempts = Math.max(state.attempts || 0, incoming.attempts || 0);
@@ -1392,7 +1504,7 @@
         payload.verbs.map(normalizeVerb).filter((verb) => verb.infinitif).forEach((verb) => byKey.set(verb.infinitif.toLocaleLowerCase("fr-FR"), verb));
         learnedVerbs = [...byKey.values()];
       }
-      persist();
+      if (save) persist();
       safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs));
       renderAll();
     }
@@ -1412,6 +1524,91 @@
       reader.onload = () => { try { mergeBackup(JSON.parse(String(reader.result || ""))); showToast("Progression importée et fusionnée."); } catch (error) { showToast(`Import impossible : ${error.message}`); } };
       reader.onerror = () => showToast("Import impossible : le fichier n'a pas pu être lu.");
       reader.readAsText(file, "UTF-8");
+    }
+    function setAuthMessage(message, type = "") {
+      const element = $("#authMessage"); element.textContent = message; element.className = `auth-message ${type}`.trim();
+    }
+    function openAuth() { $("#authBackdrop").classList.remove("hidden"); setAuthMessage(appwriteReady ? "" : "Le mode local est actif. Configure les identifiants publics Appwrite dans index.html pour activer les comptes."); }
+    function closeAuth() { $("#authBackdrop").classList.add("hidden"); }
+    function setAuthTab(tab) {
+      const login = tab === "login";
+      $("#loginForm").classList.toggle("hidden", !login); $("#signupForm").classList.toggle("hidden", login);
+      $("#showLoginTab").classList.toggle("button-primary", login); $("#showSignupTab").classList.toggle("button-primary", !login);
+      $("#authTitle").textContent = login ? "Se connecter" : "Créer mon compte";
+      setAuthMessage("");
+    }
+    function updateAuthUi(user) {
+      const loggedIn = Boolean(user);
+      $("#authStatus").textContent = loggedIn ? (user.name || user.email || "Connecté") : (appwriteReady ? "Non connecté" : "Mode local");
+      $("#accountButton").textContent = loggedIn ? "Se déconnecter" : "👤 Se connecter";
+    }
+    async function handleLogin(event) {
+      event.preventDefault();
+      if (!appwriteReady) { setAuthMessage("Configure les identifiants publics Appwrite avant de créer un compte.", "error"); return; }
+      const email = $("#loginIdentifier").value.trim().toLowerCase();
+      if (!email.includes("@")) { setAuthMessage("Connecte-toi avec ton adresse email Appwrite.", "error"); return; }
+      try {
+        await appwriteAccount.createEmailPasswordSession({ email, password: $("#loginPassword").value });
+        const user = await appwriteAccount.get();
+        state.authUserId = user.$id; updateAuthUi(user); await loadRemoteProgress(user.$id); persist();
+        setAuthMessage("Connexion réussie.", "success"); closeAuth();
+      } catch (error) { setAuthMessage(error.message || "Connexion impossible.", "error"); }
+    }
+    async function handleSignup(event) {
+      event.preventDefault();
+      if (!appwriteReady) { setAuthMessage("Configure les identifiants publics Appwrite avant de créer un compte.", "error"); return; }
+      const username = $("#signupUsername").value.trim().toLowerCase();
+      const email = $("#signupEmail").value.trim().toLowerCase();
+      const password = $("#signupPassword").value;
+      if (!/^[a-z0-9_]{3,24}$/.test(username)) { setAuthMessage("Le nom doit contenir 3 à 24 caractères : lettres, chiffres ou _.", "error"); return; }
+      if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) { setAuthMessage("Le mot de passe doit contenir 8 caractères, une majuscule et un chiffre.", "error"); return; }
+      if (password !== $("#signupConfirm").value) { setAuthMessage("Les deux mots de passe ne correspondent pas.", "error"); return; }
+      try {
+        await appwriteAccount.create({ userId: appwriteId.unique(), email, password, name: username });
+        await appwriteAccount.createEmailPasswordSession({ email, password });
+        const user = await appwriteAccount.get();
+        state.authUserId = user.$id; updateAuthUi(user); await loadRemoteProgress(user.$id); persist();
+        setAuthMessage("Compte créé et connecté.", "success"); closeAuth();
+      } catch (error) { setAuthMessage(error.message || "Inscription impossible.", "error"); }
+    }
+    async function handleForgotPassword() {
+      if (!appwriteReady) { setAuthMessage("La récupération nécessite la configuration Appwrite.", "error"); return; }
+      const email = $("#loginIdentifier").value.trim();
+      if (!email.includes("@")) { setAuthMessage("Saisis ton adresse email pour recevoir le lien.", "error"); return; }
+      try {
+        await appwriteAccount.createRecovery({ email, url: `${location.origin}${location.pathname}` });
+        setAuthMessage("Lien de réinitialisation envoyé si cette adresse existe.", "success");
+      } catch (error) { setAuthMessage(error.message || "Impossible d'envoyer le lien.", "error"); }
+    }
+    async function handlePasswordRecovery() {
+      if (!appwriteReady) return;
+      const params = new URLSearchParams(location.search);
+      const userId = params.get("userId"), secret = params.get("secret");
+      if (!userId || !secret) return;
+      const password = window.prompt("Choisis un nouveau mot de passe (8 caractères, une majuscule et un chiffre) :");
+      if (password === null) return;
+      if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) { showToast("Mot de passe trop faible."); return; }
+      try {
+        await appwriteAccount.updateRecovery({ userId, secret, password });
+        history.replaceState(null, "", `${location.pathname}${location.hash}`);
+        showToast("Mot de passe mis à jour.");
+      } catch (error) { showToast(error.message || "Réinitialisation impossible."); }
+    }
+    function restartQuiz() {
+      if (!confirm("Recommencer ce quiz ? Les réponses et vérifications seront effacées, mais tes cartes resteront conservées.")) return;
+      state.answers = {}; state.examples = {}; state.verifiedByTask = {}; state.attempts = 0; state.successes = 0; state.mastered = [];
+      state.taskProgress = {}; state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0; state.currentId = state.exerciseQueue[0]?.taskId || state.errors[0]?.id; state.quizCompleted = false;
+      persist(); renderAll(); showToast("Quiz recommencé.");
+    }
+    async function initAuth() {
+      updateAuthUi(null);
+      if (appwriteReady) {
+        try {
+          const user = await appwriteAccount.get();
+          state.authUserId = user.$id; updateAuthUi(user); await loadRemoteProgress(user.$id);
+        } catch (error) { state.authUserId = null; updateAuthUi(null); }
+      }
+      await handlePasswordRecovery();
     }
 
     $$(".nav-button").forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
@@ -1453,7 +1650,7 @@
         const id = Number(deleteButton.dataset.deleteError);
         if (!confirm("Supprimer cette carte et sa progression ?")) return;
         state.errors = state.errors.filter((item) => item.id !== id);
-        delete state.answers[id]; delete state.examples[id]; delete state.taskProgress[id]; delete state.selectedMode[id]; delete state.puzzleChoices[id];
+        delete state.answers[id]; delete state.examples[id]; delete state.taskProgress[id]; delete state.selectedMode[id]; delete state.puzzleChoices[id]; delete state.verifiedByTask[id];
         state.mastered = state.mastered.filter((item) => item !== id);
         state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0; persist(); renderAll(); showToast("Carte supprimée.");
       }
@@ -1485,8 +1682,31 @@
       if (!confirm("Réinitialiser toutes les réponses, exemples et validations locales ?")) return;
       state = structuredClone(defaultState); persist(); renderAll(); showToast("Progression réinitialisée.");
     });
+    $("#restartQuizButton").addEventListener("click", restartQuiz);
+    $("#accountButton").addEventListener("click", async () => {
+      if (!appwriteReady || !state.authUserId) { setAuthTab("login"); openAuth(); return; }
+      try {
+        await appwriteAccount.deleteSession("current");
+        clearTimeout(remoteSaveTimer); remoteRowExists = false;
+        safeStorageSet("francais_anonymous_backup", JSON.stringify(getBackupPayload()));
+        state = structuredClone(defaultState); state.authUserId = null; updateAuthUi(null); persist(); renderAll();
+        showToast("Tu es déconnecté.");
+      } catch (error) { showToast(error.message || "Déconnexion impossible."); }
+    });
+    $("#closeAuth").addEventListener("click", closeAuth);
+    $("#authBackdrop").addEventListener("click", (event) => { if (event.target === $("#authBackdrop")) closeAuth(); });
+    $("#showLoginTab").addEventListener("click", () => setAuthTab("login"));
+    $("#showSignupTab").addEventListener("click", () => setAuthTab("signup"));
+    $("#loginForm").addEventListener("submit", handleLogin);
+    $("#signupForm").addEventListener("submit", handleSignup);
+    $("#forgotPasswordButton").addEventListener("click", handleForgotPassword);
+    $("#toggleLoginPassword").addEventListener("click", () => {
+      const field = $("#loginPassword"); field.type = field.type === "password" ? "text" : "password";
+      $("#toggleLoginPassword").textContent = field.type === "password" ? "👁️ Afficher le mot de passe" : "🙈 Masquer le mot de passe";
+    });
     document.addEventListener("keydown", (event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") checkAnswer(); });
     renderAll();
+    initAuth();
   </script>
 </body>
 </html>
