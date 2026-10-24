@@ -1829,8 +1829,8 @@
         if (!this.ready()) throw new Error("Connecte-toi à ton compte Appwrite pour utiliser l’aide IA.");
         const fn = new Appwrite.Functions(appwriteClient);
         let result;
-        try { result = await fn.createExecution({ functionId: "phrase-juste-coach", body: JSON.stringify({ mode, messages, language, context }), async: false, path: "/", method: "POST", headers: { "Content-Type": "application/json" } }); }
-        catch (error) { throw new Error("La fonction phrase-juste-coach n’est pas encore disponible dans Appwrite. Elle doit être déployée avant l’utilisation."); }
+        try { result = await fn.createExecution({ functionId: "6adc9c04001ac6b28395", body: JSON.stringify({ mode, messages, language, context }), async: false, path: "/", method: "POST", headers: { "Content-Type": "application/json" } }); }
+        catch (error) { throw new Error("La fonction phrase-juste-coach n’est pas encore déployée dans Appwrite. Ajoute aussi la clé Gemini dans ses variables secrètes."); }
         let data = {}; try { data = JSON.parse(result.responseBody || "{}"); } catch {}
         if (Number(result.responseStatusCode) < 200 || Number(result.responseStatusCode) >= 300) throw new Error(data.message || "Le coach IA ne peut pas répondre pour le moment.");
         if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("La réponse du coach est vide.");
