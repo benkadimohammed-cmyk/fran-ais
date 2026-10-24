@@ -299,6 +299,7 @@
       .form-footer .button { width: 100%; }
       .nav { grid-template-columns: 1fr 1fr; }
     }
+  .daily-plan-card,.daily-activity-card,.unified-import-card{padding:clamp(18px,4vw,28px);border:1px solid #dce5e1;border-radius:22px;background:#fff;box-shadow:0 12px 36px #173a3210}.daily-plan-top{display:flex;align-items:center;justify-content:space-between;gap:18px}.daily-plan-top h3,.daily-activity-card h3,.unified-import-card h3{font-size:1.3rem;font-weight:750;margin:.35rem 0}.daily-plan-top p,.unified-import-card>p{color:#66716f;margin:0}.daily-plan-progress{display:flex;align-items:center;gap:12px;margin-top:24px}.daily-plan-progress .xp-track{flex:1}.daily-activity-card{margin-top:18px}.daily-activity-head,.daily-activity-actions,.unified-import-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.daily-activity-head{justify-content:space-between;color:#66716f}.daily-activity-card #dailyActivityPrompt{padding:18px;margin:16px 0;background:#f4f8f6;border-radius:14px}.daily-answer-input{width:100%;padding:14px;border:1px solid #ccd8d3;border-radius:12px;font:inherit}.daily-activity-actions{margin-top:14px}.unified-import-icon{font-size:2rem}.import-format-hint{margin-top:18px;padding:14px;background:#f4f8f6;border-radius:12px;overflow-wrap:anywhere}.import-format-hint code{font-size:.78rem}.pet-widget{position:fixed;z-index:60;right:20px;bottom:24px}.pet-launcher{display:flex;align-items:center;gap:9px;padding:12px 16px;border:0;border-radius:999px;background:#176a57;color:white;box-shadow:0 8px 24px #123c3040;font:inherit;font-weight:700;cursor:pointer}.pet-launcher span{font-size:1.35rem}.pet-panel{position:absolute;right:0;bottom:68px;width:min(380px,calc(100vw - 28px));max-height:min(75vh,650px);overflow:auto;padding:18px;border-radius:20px;background:white;box-shadow:0 20px 70px #10292240;border:1px solid #dce5e1}.pet-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.pet-panel-head>div:nth-child(2){flex:1}.pet-panel-head small{display:block;color:#66716f}.pet-avatar{display:grid;place-items:center;width:42px;height:42px;background:#e9f5ef;border-radius:50%;font-size:1.3rem}.pet-close{border:0;background:transparent;font-size:1.6rem;cursor:pointer}.pet-panel textarea,.pet-panel select,.pet-other-language{width:100%;padding:11px;border:1px solid #ccd8d3;border-radius:10px;font:inherit;margin:6px 0 10px}.pet-consent{display:flex;gap:8px;align-items:flex-start;font-size:.78rem;color:#56615e;margin:8px 0 12px}.pet-footnote,.pet-context{font-size:.8rem;color:#66716f}.pet-reply{white-space:pre-wrap;padding:12px;margin:10px 0;background:#f4f8f6;border-radius:12px}.pet-panel .button{width:100%}.daily-goal-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}.daily-goal-choice{padding:18px 10px;border:1px solid #d4e0db;border-radius:14px;background:#f6faf8;cursor:pointer}.daily-goal-choice strong,.daily-goal-choice small{display:block}.daily-goal-choice small{margin-top:5px;color:#66716f}@media(max-width:650px){.daily-plan-top{align-items:stretch;flex-direction:column}.daily-plan-top .button{width:100%}.daily-plan-progress{align-items:flex-start;flex-direction:column}.pet-widget{right:12px;bottom:calc(80px + env(safe-area-inset-bottom))}.pet-launcher small{display:none}.pet-panel{right:-4px}.daily-goal-choices{grid-template-columns:1fr}.unified-import-actions>*{width:100%}}
   </style>
 </head>
 <body>
@@ -313,6 +314,7 @@
       </div>
       <nav class="nav" aria-label="Navigation principale">
         <button class="nav-button active" data-view="training"><span class="nav-icon">✍</span><span>Entraînement</span></button>
+        <button class="nav-button" data-view="daily"><span class="nav-icon">🗓</span><span>Mon programme</span></button>
         <button class="nav-button" data-view="dashboard"><span class="nav-icon">◉</span><span>Tableau de bord</span></button>
         <button class="nav-button" data-view="lessons"><span class="nav-icon">▦</span><span>Parcours A1–B1</span></button>
         <button class="nav-button" data-view="notebook"><span class="nav-icon">▤</span><span>Mon Cahier</span></button>
@@ -321,6 +323,7 @@
         <button class="nav-button" data-view="rules"><span class="nav-icon">📜</span><span>Mes Règles d'Or</span></button>
         <button class="nav-button" data-view="conversation"><span class="nav-icon">💬</span><span>Conversation libre</span></button>
         <button class="nav-button" data-view="sync"><span class="nav-icon">🔄</span><span>Sauvegarde &amp; Synchronisation</span></button>
+        <button class="nav-button" data-view="import"><span class="nav-icon">📥</span><span>Importer mes contenus</span></button>
       </nav>
       <div class="sidebar-note">
         <strong>Rituel conseillé</strong>
@@ -338,8 +341,6 @@
         <div class="topbar-actions">
           <div class="account-menu"><span class="account-label" id="authStatus">Mode local</span><button class="button button-small" id="accountButton" type="button">👤 Se connecter</button></div>
           <button class="button button-accent" id="addErrorTop">＋ Nouvelle erreur</button>
-          <button class="button" id="importJsonButton">📥 Importer de nouvelles phrases (JSON)</button>
-          <input id="importJsonInput" type="file" accept=".json,application/json" hidden />
           <button class="button" id="exportDataButton">📤 Exporter mes données (JSON)</button>
           <button class="button" id="resetProgress">Réinitialiser</button>
           <button class="button" id="restartQuizButton">↻ Recommencer le quiz</button>
@@ -455,7 +456,6 @@
           <div class="flex flex-wrap gap-2">
             <button class="button button-small" id="exportCsv">↓ Exporter CSV</button>
             <button class="button button-small" id="exportJson">↓ Exporter JSON</button>
-            <button class="button button-small" id="importJsonButtonNotebook">📥 Importer JSON</button>
             <button class="button button-small" id="exportDataButtonNotebook">📤 Sauvegarder mes données</button>
           </div>
         </div>
@@ -500,10 +500,6 @@
             <h2 class="font-display text-3xl tracking-tight mb-1">Mes Verbes &amp; Conjugaison</h2>
             <p class="text-sm text-[#66716f]">Écoute, lis les formes et relie chaque conjugaison à une phrase utile.</p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button class="button button-accent" id="importVerbsButton">📥 Importer mes verbes (JSON)</button>
-            <input id="importVerbsInput" type="file" accept=".json,application/json" hidden />
-          </div>
         </div>
         <div class="verb-grid" id="verbsGrid"></div>
       </section>
@@ -527,13 +523,40 @@
         <div class="sync-panel">
           <div class="sync-actions">
             <button class="button button-accent" id="syncExportButton">📤 Exporter ma progression (JSON)</button>
-            <button class="button" id="syncImportButton">📥 Importer ma progression (JSON)</button>
-            <input id="syncImportInput" type="file" accept=".json,application/json" hidden>
             <button class="button" id="copySyncButton">📋 Copier le code de synchronisation (Texte)</button>
           </div>
           <div class="field"><label class="label" for="syncCodeInput">Coller le code de synchronisation</label><textarea class="sync-code" id="syncCodeInput" placeholder="Colle ici le code reçu sur ton téléphone…" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea></div>
           <button class="button button-primary" id="applySyncButton">Valider le code</button>
         </div>
+      </section>
+
+      <section class="view" id="dailyView">
+        <div class="eyebrow">Un programme adapté à ton temps</div>
+        <h2 class="font-display text-3xl tracking-tight mb-2">Mon programme du jour</h2>
+        <p class="text-sm text-[#66716f] mb-5" id="dailyPlanIntro">Choisis 20, 30 ou 60 minutes. Chaque séance mélange les bases, les verbes, les puzzles et un petit test.</p>
+        <article class="dashboard-card daily-plan-card">
+          <div class="daily-plan-top"><div><div class="eyebrow">Aujourd’hui</div><h3 id="dailyPlanTitle">Prêt à pratiquer ?</h3><p id="dailyPlanSummary">Un peu de grammaire, de conjugaison et de pratique active.</p></div><button class="button button-primary" id="dailyPlanStartButton" type="button">Commencer ma séance</button></div>
+          <div class="daily-plan-progress"><div class="xp-track"><div class="xp-fill" id="dailyPlanFill"></div></div><span id="dailyPlanProgressLabel">0 activité terminée</span><button class="soft-button" id="changeDailyGoalButton" type="button">Changer mon temps quotidien</button></div>
+        </article>
+        <article class="dashboard-card daily-activity-card hidden" id="dailyActivityCard">
+          <div class="daily-activity-head"><span class="level-badge" id="dailyActivityKind">Puzzle</span><span id="dailyActivityCounter">1 / 8</span></div>
+          <h3 id="dailyActivityTitle">À toi de jouer</h3><div id="dailyActivityPrompt"></div><div id="dailyActivityInput"></div>
+          <div class="daily-answer hidden" id="dailyActivityFeedback" role="status"></div>
+          <div class="daily-activity-actions"><button class="button" id="dailyActivityHintButton" type="button">Indice</button><button class="button button-primary" id="dailyActivityCheckButton" type="button">Vérifier</button><button class="button button-primary hidden" id="dailyActivityNextButton" type="button">Suivant →</button></div>
+        </article>
+      </section>
+
+      <section class="view" id="importView">
+        <div class="eyebrow">Tout au même endroit</div><h2 class="font-display text-3xl tracking-tight mb-2">Importer mes contenus</h2>
+        <p class="text-sm text-[#66716f] mb-5">Choisis un seul fichier. Phrase juste reconnaît les phrases, verbes et sauvegardes, même s’il vient d’une ancienne section.</p>
+        <article class="dashboard-card unified-import-card">
+          <div class="unified-import-icon">📥</div><h3>Ajouter un fichier JSON ou CSV</h3>
+          <p>Les anciens fichiers JSON de phrases, verbes et sauvegardes restent compatibles. Le CSV peut mélanger phrases et verbes.</p>
+          <div class="unified-import-actions"><button class="button button-primary" id="chooseUnifiedImportButton" type="button">Choisir un fichier</button><button class="button" id="downloadImportTemplateButton" type="button">Télécharger le modèle CSV</button><button class="button" id="downloadJsonTemplateButton" type="button">Télécharger un exemple JSON</button></div>
+          <input id="unifiedImportInput" type="file" accept=".json,.csv,application/json,text/csv" hidden>
+          <div class="import-format-hint"><strong>Colonnes CSV :</strong> <code>type,categorie,erreur,correction,regle,infinitif,anglais,temps,je,tu,il,nous,vous,ils,exemple,exempleAnglais</code><br><small>Pour une phrase : catégorie, erreur, correction et règle. Pour un verbe : infinitif, temps et formes.</small></div>
+          <p class="profile-note" id="unifiedImportStatus" role="status"></p>
+        </article>
       </section>
 
       <section class="view" id="conversationView">
@@ -595,6 +618,25 @@
       </form>
       <div class="auth-message" id="authMessage" role="status"></div>
     </div>
+  </div>
+  <div class="modal-backdrop hidden" id="dailyGoalBackdrop" role="dialog" aria-modal="true" aria-labelledby="dailyGoalTitle">
+    <div class="modal daily-goal-modal">
+      <div class="eyebrow">Un petit rituel, à ton rythme</div><h2 id="dailyGoalTitle">Combien de temps veux-tu pratiquer chaque jour ?</h2>
+      <p class="text-sm text-[#66716f]">Tu peux changer ton choix quand tu veux. Le programme mélangera les bases, les verbes, les puzzles et les tests.</p>
+      <div class="daily-goal-choices"><button class="daily-goal-choice" data-daily-minutes="20" type="button"><strong>20 min</strong><small>Un petit entraînement</small></button><button class="daily-goal-choice" data-daily-minutes="30" type="button"><strong>30 min</strong><small>Un bon équilibre</small></button><button class="daily-goal-choice" data-daily-minutes="60" type="button"><strong>1 heure</strong><small>Une séance approfondie</small></button></div>
+    </div>
+  </div>
+  <div class="pet-widget" id="petWidget">
+    <section class="pet-panel hidden" id="petPanel" aria-label="Aide de ton compagnon">
+      <div class="pet-panel-head"><div class="pet-avatar" aria-hidden="true">🐾</div><div><strong>Ton compagnon</strong><small>Je peux t’expliquer dans ta langue.</small></div><button class="pet-close" id="petCloseButton" type="button" aria-label="Fermer l’aide">×</button></div>
+      <label class="label" for="petLanguage">Langue d’explication</label><select id="petLanguage"><option>English</option><option>العربية</option><option>Français</option><option>Tamazight</option><option>Español</option><option>Other</option></select>
+      <input class="pet-other-language hidden" id="petOtherLanguage" type="text" maxlength="48" placeholder="Type your language" aria-label="Ta langue">
+      <p class="pet-context" id="petContext">Demande-lui ce que tu n’as pas compris.</p>
+      <form id="petQuestionForm"><textarea id="petQuestion" maxlength="800" rows="3" placeholder="Que veux-tu comprendre ?" required></textarea><label class="pet-consent"><input id="petConsent" type="checkbox" required> J’autorise l’envoi de ma question et du contexte de l’exercice à Google Gemini. Ne partage pas d’informations privées.</label><button class="button button-primary" id="petAskButton" type="submit">Demander au compagnon</button></form>
+      <div class="pet-reply hidden" id="petReply" aria-live="polite"></div>
+      <p class="pet-footnote">Les réponses IA peuvent contenir des erreurs. Le compagnon n’enregistre pas cette discussion.</p>
+    </section>
+    <button class="pet-launcher" id="petLauncher" type="button" aria-label="Demander de l’aide au compagnon"><span>🐾</span><small>Besoin d’aide ?</small></button>
   </div>
   <div class="toast" id="toast" role="status"></div>
 
@@ -1192,6 +1234,8 @@
       $("#rulesView").classList.toggle("active", name === "rules");
       $("#conversationView").classList.toggle("active", name === "conversation");
       $("#syncView").classList.toggle("active", name === "sync");
+      $("#dailyView").classList.toggle("active", name === "daily");
+      $("#importView").classList.toggle("active", name === "import");
       const copy = {
         training: ["Session du jour · progression douce", "Trouver la bonne phrase, sans stress.", "Commence par cliquer, puis écris petit à petit. La difficulté monte seulement quand tu es prêt."],
         dashboard: ["Vue réelle · suivi personnel", "Voir ce qui mérite ton attention.", "Les compteurs proviennent uniquement de tes réponses et de tes révisions."],
@@ -1202,6 +1246,8 @@
         conversation: ["Expression libre · correction sur demande", "Écrire avant de corriger.", "L’analyse ne se lance que lorsque tu le demandes."],
         sync: ["PC ↔ téléphone · sans serveur", "Garder tes progrès partout.", "Un fichier ou un code compact suffit pour transférer ta progression."],
         notebook: ["Mémoire longue · tout garder sous les yeux", "Ton cahier de français vivant.", "Retrouve tes erreurs, tes corrections validées et les exemples qui t'appartiennent vraiment."]
+        ,daily: ["Un programme adapté à ton temps", "Mon programme du jour", "Un mélange de bases, verbes, puzzles et tests, à ton rythme."]
+        ,import: ["Tout au même endroit", "Importer mes contenus", "Choisis un seul fichier JSON ou CSV pour ajouter tes phrases, verbes ou ta sauvegarde."]
       }[name] || [];
       $("#viewEyebrow").textContent = copy[0]; $("#viewTitle").textContent = copy[1]; $("#viewDescription").textContent = copy[2];
       if (name === "notebook") renderNotebook();
@@ -1210,6 +1256,7 @@
       if (name === "rules") renderRules();
       if (name === "dashboard") renderDashboard();
       if (name === "lessons") renderLessons();
+      if (name === "daily") renderDailyPlan();
     }
     function currentResponse(task) {
       if (activeMode === "puzzle") return (state.puzzleChoices[task.id] || []).join(" ");
@@ -1659,19 +1706,164 @@
         state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0; persist(); renderAll(); showToast("Carte supprimée.");
       }
     });
+    function parseCsv(text) {
+      const rows = []; let row = [], cell = "", quoted = false;
+      text = text.replace(/^\uFEFF/, "");
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (quoted) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') quoted = false; else cell += c; }
+        else if (c === '"') quoted = true;
+        else if (c === ',' || c === ';' || c === '\t') { row.push(cell.trim()); cell = ""; }
+        else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); row = []; cell = ""; }
+        else cell += c;
+      }
+      row.push(cell.trim()); if (row.some(Boolean)) rows.push(row);
+      if (rows.length < 2) throw new Error("Le CSV doit contenir une ligne de titres et au moins une ligne de contenu.");
+      const heads = rows.shift().map(h => normalizeLoose(h).replace(/[^a-z0-9]/g, ""));
+      return rows.map(values => Object.fromEntries(heads.map((h, i) => [h, values[i] || ""])));
+    }
+    function normalizeImportPhrase(item, index) {
+      return { id: Number(item.id) || (Math.max(0, ...state.errors.map(e => Number(e.id) || 0)) + index + 1), categorie: String(item.categorie ?? item.category ?? "Importé").trim(), erreur: String(item.erreur ?? item.error ?? item.phrase ?? "").trim(), correction: String(item.correction ?? item.correct ?? "").trim(), regle: String(item.regle ?? item.rule ?? item.explanation ?? "À revoir").trim() };
+    }
+    function importCsvRows(rows) {
+      const phrases = [], verbRows = new Map();
+      for (const row of rows) {
+        const get = (...keys) => keys.map(k => row[normalizeLoose(k).replace(/[^a-z0-9]/g, "")]).find(v => v);
+        const infinitif = get("infinitif", "verbe", "verb");
+        const type = normalizeLoose(get("type", "kind", "type de contenu") || (infinitif ? "verbe" : "phrase"));
+        if (infinitif || /verbe|verb|conjug/.test(type)) {
+          if (!infinitif) continue;
+          const key = infinitif.toLocaleLowerCase("fr-FR");
+          if (!verbRows.has(key)) verbRows.set(key, { infinitif, anglais: get("anglais", "english") || "", temps: [] });
+          const forms = ["je","tu","il","nous","vous","ils"].map(p => get(p) || "");
+          const rawForms = get("formes", "forms"); if (rawForms) rawForms.split(/[|/]/).forEach((v,i) => { if (i < 6) forms[i] = v.trim(); });
+          if (forms.some(Boolean)) verbRows.get(key).temps.push({ nom: get("temps", "tense") || "Présent", formes: forms, exemple: get("exemple", "example") || "", exempleAnglais: get("exempleanglais", "exampleenglish") || "" });
+        } else {
+          const p = normalizeImportPhrase({ categorie: get("categorie","category"), erreur: get("erreur","error","phrase"), correction: get("correction","correct"), regle: get("regle","rule","explanation") }, phrases.length);
+          if (p.erreur && p.correction) phrases.push(p);
+        }
+      }
+      const verbs = [...verbRows.values()].map(normalizeVerb).filter(v => v.infinitif && v.temps.length);
+      return { phrases, verbs };
+    }
+    async function importUnifiedFile(event) {
+      const file = event.target.files?.[0]; event.target.value = ""; if (!file) return;
+      const status = $("#unifiedImportStatus"); status.textContent = "Lecture du fichier…";
+      try {
+        const text = await file.text(); let phrases = [], verbs = [], data = null;
+        if (/\.csv$/i.test(file.name) || file.type.includes("csv")) ({ phrases, verbs } = importCsvRows(parseCsv(text)));
+        else {
+          data = JSON.parse(text);
+          if (Array.isArray(data)) {
+            if (data.some(x => x && (x.infinitif || x.temps || x.formes))) verbs = data.map(normalizeVerb).filter(v => v.infinitif && v.temps.length);
+            else phrases = data.map(normalizeImportPhrase).filter(p => p.erreur && p.correction);
+          } else if (data && typeof data === "object") {
+            if (Array.isArray(data.verbes)) verbs = data.verbes.map(normalizeVerb).filter(v => v.infinitif && v.temps.length);
+            if (Array.isArray(data.phrases)) phrases = data.phrases.map(normalizeImportPhrase).filter(p => p.erreur && p.correction);
+            if (Array.isArray(data.errors)) phrases.push(...data.errors.map(normalizeImportPhrase).filter(p => p.erreur && p.correction));
+            if (data.quizProgress || data.progress || data.errors && data.queue) mergeBackup(data.quizProgress ? data : { quizProgress: { ...data.progress, errors: data.errors, typingErrors: data.typingErrors }, verbs: data.verbs || data.verbes }, false);
+            if (!phrases.length && !verbs.length && !data.quizProgress && !data.progress && !Array.isArray(data.errors)) throw new Error("Je ne reconnais pas ce fichier JSON.");
+          } else throw new Error("Le fichier JSON n’a pas le bon format.");
+        }
+        let added = 0;
+        const signature = p => normalizeLoose(`${p.categorie}|${p.erreur}|${p.correction}`);
+        const seen = new Set(state.errors.map(signature));
+        phrases.forEach(p => { const sig = signature(p); if (!seen.has(sig)) { p.id = Math.max(0, ...state.errors.map(e => Number(e.id) || 0)) + 1; state.errors.push(p); seen.add(sig); added++; } });
+        const map = new Map(learnedVerbs.map(v => [normalizeVerb(v).infinitif.toLocaleLowerCase("fr-FR"), normalizeVerb(v)]));
+        verbs.forEach(v => map.set(v.infinitif.toLocaleLowerCase("fr-FR"), v)); learnedVerbs = [...map.values()];
+        safeStorageSet(VERBS_STORAGE_KEY, JSON.stringify(learnedVerbs)); safeStorageSet(VERBS_DATA_KEY, JSON.stringify(learnedVerbs));
+        state.exerciseQueue = buildExerciseQueue(); state.queueIndex = 0; persist(); renderAll();
+        status.textContent = `Import terminé : ${added} phrase(s), ${verbs.length} verbe(s). Les doublons ont été ignorés.`;
+      } catch (error) { status.textContent = `Import impossible : ${error.message}`; }
+    }
+    function downloadImportTemplate() {
+      download("modele-import-phrase-juste.csv", 'type,categorie,erreur,correction,regle,infinitif,anglais,temps,je,tu,il,nous,vous,ils,exemple,exempleAnglais\nphrase,Genre,"Je suis content","Je suis contente","Accord avec une femme",,,,,,,,,,,\nverbe,,,,,parler,"to speak",Présent,parle,parles,parle,parlons,parlez,parlent,"Je parle français","I speak French"', "text/csv;charset=utf-8");
+    }
+    function renderDailyPlan() {
+      const minutes = Number(state.dailyPlanMinutes) || 0, today = new Date().toLocaleDateString("sv-SE");
+      if (!minutes) { $("#dailyPlanTitle").textContent = "Choisis ton objectif quotidien"; $("#dailyPlanSummary").textContent = "20, 30 ou 60 minutes par jour."; return; }
+      if (state.dailyPlanDate !== today) { state.dailyPlanDate = today; state.dailyPlanItems = []; state.dailyPlanIndex = 0; state.dailyPlanDone = 0; state.dailyPlanStarted = false; persist(); }
+      const count = minutes === 20 ? 8 : minutes === 30 ? 12 : 24;
+      $("#dailyPlanTitle").textContent = state.dailyPlanDone >= count ? "Séance terminée, bravo !" : `Objectif : ${minutes} minutes`;
+      $("#dailyPlanSummary").textContent = `${state.dailyPlanDone || 0} sur ${count} activités aujourd’hui · bases, verbes, puzzles et tests.`;
+      $("#dailyPlanProgressLabel").textContent = `${state.dailyPlanDone || 0} / ${count} activités terminées`;
+      $("#dailyPlanFill").style.width = `${Math.min(100, ((state.dailyPlanDone || 0) / count) * 100)}%`;
+      $("#dailyActivityCard").classList.toggle("hidden", !state.dailyPlanStarted || state.dailyPlanDone >= count);
+    }
+    function dailyMakeQueue() {
+      const minutes = Number(state.dailyPlanMinutes) || 20, count = minutes === 20 ? 8 : minutes === 30 ? 12 : 24;
+      const types = ["bases", "verb", "puzzle", "test"], items = [];
+      for (let i=0;i<count;i++) items.push({ type: types[i % types.length], index: i });
+      state.dailyPlanItems = items; state.dailyPlanIndex = 0; state.dailyPlanDone = 0; state.dailyPlanStarted = true; persist(); dailyShowActivity(); renderDailyPlan();
+    }
+    let dailyCurrent = null;
+    function dailyShowActivity() {
+      const i = state.dailyPlanDone || 0, item = (state.dailyPlanItems || [])[i]; if (!item) { renderDailyPlan(); return; }
+      const task = state.errors[i % state.errors.length]; dailyCurrent = { ...item, task };
+      const labels = { bases: "Les bases", verb: "Verbe", puzzle: "Puzzle", test: "Petit test" };
+      $("#dailyActivityKind").textContent = labels[item.type]; $("#dailyActivityCounter").textContent = `${i+1} / ${state.dailyPlanItems.length}`;
+      $("#dailyActivityTitle").textContent = item.type === "verb" ? "Complète la conjugaison" : item.type === "puzzle" ? "Réécris correctement" : "Comment dirais-tu cela ?";
+      if (item.type === "verb" && learnedVerbs.length) {
+        const verb = normalizeVerb(learnedVerbs[i % learnedVerbs.length]), tense = verb.temps[i % verb.temps.length], person = i % 6;
+        dailyCurrent.verb = verb; dailyCurrent.tense = tense; dailyCurrent.person = person;
+        const pronouns = ["je","tu","il/elle","nous","vous","ils/elles"];
+        $("#dailyActivityPrompt").textContent = `${pronouns[person]} + ${verb.infinitif} (${tense.nom})`;
+      } else $("#dailyActivityPrompt").textContent = task.erreur || "Écris une réponse.";
+      $("#dailyActivityInput").innerHTML = '<input class="daily-answer-input" id="dailyAnswerInput" type="text" placeholder="Ta réponse…" autocomplete="off">';
+      $("#dailyActivityFeedback").classList.add("hidden"); $("#dailyActivityCheckButton").classList.remove("hidden"); $("#dailyActivityNextButton").classList.add("hidden");
+      renderDailyPlan();
+    }
+    function dailyCheck() {
+      if (!dailyCurrent) return; const answer = $("#dailyAnswerInput").value.trim(); if (!answer) return;
+      const expected = dailyCurrent.verb ? dailyCurrent.tense.formes[dailyCurrent.person] : dailyCurrent.task.correction;
+      const ok = normalizeLoose(answer) === normalizeLoose(expected);
+      const feedback = $("#dailyActivityFeedback"); feedback.innerHTML = ok ? "✅ Bonne réponse !" : `À retenir : <strong>${escapeHtml(expected)}</strong>${!dailyCurrent.verb && dailyCurrent.task.regle ? `<br>${escapeHtml(dailyCurrent.task.regle)}` : ""}`;
+      feedback.classList.remove("hidden"); state.dailyPlanDone = (state.dailyPlanDone || 0) + 1;
+      if (dailyCurrent.verb) { state.verbDrillAttempts = (state.verbDrillAttempts || 0) + 1; state.verbDrillSuccesses = (state.verbDrillSuccesses || 0) + Number(ok); }
+      else { state.attempts++; state.successes += Number(ok); }
+      $("#dailyActivityCheckButton").classList.add("hidden"); $("#dailyActivityNextButton").classList.remove("hidden"); persist(); renderDailyPlan();
+    }
+    window.PhraseJusteAI = {
+      ready() { return Boolean(appwriteReady && state.authUserId && window.Appwrite?.Functions); },
+      async ask({ mode = "coach", messages = [], language = "français", context = "" } = {}) {
+        if (!this.ready()) throw new Error("Connecte-toi à ton compte Appwrite pour utiliser l’aide IA.");
+        const fn = new Appwrite.Functions(appwriteClient);
+        let result;
+        try { result = await fn.createExecution({ functionId: "phrase-juste-coach", body: JSON.stringify({ mode, messages, language, context }), async: false, path: "/", method: "POST", headers: { "Content-Type": "application/json" } }); }
+        catch (error) { throw new Error("La fonction phrase-juste-coach n’est pas encore disponible dans Appwrite. Elle doit être déployée avant l’utilisation."); }
+        let data = {}; try { data = JSON.parse(result.responseBody || "{}"); } catch {}
+        if (Number(result.responseStatusCode) < 200 || Number(result.responseStatusCode) >= 300) throw new Error(data.message || "Le coach IA ne peut pas répondre pour le moment.");
+        if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("La réponse du coach est vide.");
+        return data.reply;
+      }
+    };
+    window.PhraseJusteAI.askCoach = messages => window.PhraseJusteAI.ask({ mode: "coach", messages });
     $("#exportCsv").addEventListener("click", exportCsv);
     $("#exportJson").addEventListener("click", exportJson);
-    $("#importJsonButton").addEventListener("click", () => $("#importJsonInput").click());
-    $("#importJsonButtonNotebook").addEventListener("click", () => $("#importJsonInput").click());
-    $("#importJsonInput").addEventListener("change", importPhrasesFromFile);
     $("#exportDataButton").addEventListener("click", exportAllData);
     $("#exportDataButtonNotebook").addEventListener("click", exportAllData);
-    $("#importVerbsButton").addEventListener("click", () => $("#importVerbsInput").click());
-    $("#importVerbsInput").addEventListener("change", importVerbsFromFile);
+    $("#chooseUnifiedImportButton").addEventListener("click", () => $("#unifiedImportInput").click());
+    $("#unifiedImportInput").addEventListener("change", importUnifiedFile);
+    $("#downloadImportTemplateButton").addEventListener("click", downloadImportTemplate);
+    $("#downloadJsonTemplateButton").addEventListener("click", () => download("exemple-import-phrase-juste.json", JSON.stringify({ phrases: [{ categorie: "Genre", erreur: "Je suis content", correction: "Je suis contente", regle: "Accord selon la personne" }], verbes: [{ infinitif: "parler", anglais: "to speak", temps: [{ nom: "Présent", formes: ["parle","parles","parle","parlons","parlez","parlent"] }] }] }, null, 2), "application/json;charset=utf-8"));
     $("#rulesSearch").addEventListener("input", (event) => renderRules(event.target.value));
     $("#syncExportButton").addEventListener("click", exportSyncBackup);
-    $("#syncImportButton").addEventListener("click", () => $("#syncImportInput").click());
-    $("#syncImportInput").addEventListener("change", importSyncFile);
+    $$("[data-daily-minutes]").forEach(button => button.addEventListener("click", () => { state.dailyPlanMinutes = Number(button.dataset.dailyMinutes); $("#dailyGoalBackdrop").classList.add("hidden"); renderDailyPlan(); persist(); showView("daily"); }));
+    $("#dailyPlanStartButton").addEventListener("click", () => { if (!state.dailyPlanMinutes) { $("#dailyGoalBackdrop").classList.remove("hidden"); return; } dailyMakeQueue(); });
+    $("#changeDailyGoalButton").addEventListener("click", () => $("#dailyGoalBackdrop").classList.remove("hidden"));
+    $("#dailyActivityCheckButton").addEventListener("click", dailyCheck);
+    $("#dailyActivityNextButton").addEventListener("click", dailyShowActivity);
+    $("#dailyActivityHintButton").addEventListener("click", () => { if (!dailyCurrent) return; $("#dailyActivityFeedback").textContent = dailyCurrent.verb ? `Indice : ${dailyCurrent.tense.nom}` : `Indice : ${dailyCurrent.task.regle}`; $("#dailyActivityFeedback").classList.remove("hidden"); });
+    $("#petLauncher").addEventListener("click", () => $("#petPanel").classList.toggle("hidden"));
+    $("#petCloseButton").addEventListener("click", () => $("#petPanel").classList.add("hidden"));
+    if (state.petLanguage && [...$("#petLanguage").options].some(option => option.value === state.petLanguage)) $("#petLanguage").value = state.petLanguage;
+    $("#petLanguage").addEventListener("change", event => { $("#petOtherLanguage").classList.toggle("hidden", event.target.value !== "Other"); state.petLanguage = event.target.value; persist(); });
+    $("#petQuestionForm").addEventListener("submit", async event => {
+      event.preventDefault(); const reply = $("#petReply"), ask = $("#petAskButton"); reply.classList.remove("hidden"); reply.textContent = "Je réfléchis…"; ask.disabled = true;
+      try { const language = $("#petLanguage").value === "Other" ? $("#petOtherLanguage").value.trim() : $("#petLanguage").value; reply.textContent = await window.PhraseJusteAI.ask({ mode:"pet", language, context: $("#dailyActivityPrompt")?.textContent || $("#taskTitle")?.textContent || "", messages:[{role:"user",text:$("#petQuestion").value.trim()}] }); }
+      catch (error) { reply.textContent = error.message || "Le compagnon n’est pas configuré pour le moment."; }
+      finally { ask.disabled = false; }
+    });
     $("#copySyncButton").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(encodeSyncCode()); showToast("Code de synchronisation copié."); }
       catch (error) { $("#syncCodeInput").value = encodeSyncCode(); showToast("Copie automatique indisponible : le code est affiché dans le champ."); }
@@ -1710,7 +1902,9 @@
     });
     document.addEventListener("keydown", (event) => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") checkAnswer(); });
     renderAll();
+    renderDailyPlan();
     initAuth();
+    if (!Number(state.dailyPlanMinutes)) setTimeout(() => $("#dailyGoalBackdrop").classList.remove("hidden"), 500);
   </script>
 </body>
 </html>
